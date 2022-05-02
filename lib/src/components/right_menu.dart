@@ -1,0 +1,233 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:refactory_scp/provider/home_controller.dart';
+import 'package:refactory_scp/provider/project_controller.dart';
+import 'package:refactory_scp/src/common/colors.dart';
+import 'package:refactory_scp/src/components/profile_dialog.dart';
+import 'package:refactory_scp/src/pages/home/home_page.dart';
+import 'package:refactory_scp/src/pages/home/project_page.dart';
+import 'package:refactory_scp/src/pages/home/team_page.dart';
+
+/// Desktop -> 오른쪽 메뉴
+/// Mobile -> Drawer
+class RightMenu extends StatelessWidget {
+  double width;
+  bool isMobile;
+  final _userId;
+  RightMenu(
+    this._userId, {
+    Key? key,
+    this.width = 300,
+    this.isMobile = false,
+  }) : super(key: key);
+
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  Widget build(BuildContext context) {
+    if (isMobile) {
+      return _mobileLayout(context);
+    } else {
+      return _desktopLayout(context);
+    }
+  }
+
+  Widget _sizeMenuDetail(BuildContext context, bool isDesktop) {
+    Size size = MediaQuery.of(context).size;
+    return Container(
+      height: double.infinity,
+      color: CustomColors.deepPurple,
+      child: SingleChildScrollView(
+        controller: _scrollController,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10.0),
+          width: width,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              const SizedBox(
+                height: 10,
+              ),
+              InkWell(
+                onTap: () {
+                  if (isMobile) Navigator.pop(context);
+                  showDialog(
+                    context: context,
+                    builder: (context) {
+                      return ProfileDialog(
+                        width: size.width * 0.5,
+                        height: size.height * 0.5,
+                        isDesktop: isDesktop,
+                      );
+                    },
+                  );
+                },
+                child: Row(
+                  mainAxisSize: MainAxisSize.max,
+                  children: const [
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: CustomColors.white,
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.only(left: 8.0),
+                        child: Text(
+                          'User Name',
+                          maxLines: 2,
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                              color: CustomColors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(
+                color: CustomColors.white,
+                thickness: 1,
+                height: 40,
+              ),
+              const Text(
+                'BigMenu',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 30,
+                    color: CustomColors.white),
+              ),
+              const SizedBox(
+                height: 20,
+              ),
+              _sideMenu(context, 'Home', onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => HomePage(
+                      uid: _userId,
+                    ),
+                  ),
+                );
+              }),
+              _sideMenu(context, 'Team', onPressed: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => TeamPage(
+                              uid: _userId,
+                            )));
+              }),
+              _sideMenu(context, 'Chat', onPressed: () {
+                // Get.dialog(
+                //   AlertDialog(
+                //     title: const Text('Not ready yet'),
+                //     content: const Text('comming soon...'),
+                //     actions: [
+                //       TextButton(
+                //         child: const Text("Close"),
+                //         onPressed: () => Get.back(),
+                //       ),
+                //     ],
+                //   ),
+                // );
+              }),
+              const SizedBox(
+                height: 30,
+              ),
+              const Text(
+                'Projects',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 30,
+                    color: CustomColors.white),
+              ),
+              const SizedBox(
+                height: 20,
+              ),
+              ...List.generate(
+                10,
+                (index) => _sideMenu(
+                  context,
+                  'project $index',
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ProjectPage(
+                            pid: '$index',
+                            uid: _userId,
+                            pageType: PROJECT_PAGE_TYPE.ALL),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _mobileLayout(BuildContext context) {
+    return _sizeMenuDetail(context, false);
+  }
+
+  Widget _desktopLayout(BuildContext context) {
+    return Scrollbar(
+        isAlwaysShown: true,
+        controller: _scrollController,
+        child: _sizeMenuDetail(context, true));
+  }
+
+  /// 사이드 메뉴
+  Widget _sideMenu(BuildContext context, String title,
+      {VoidCallback? onPressed}) {
+    return TextButton(
+      onPressed: () {
+        if (onPressed != null) {
+          // 모바일 타입일 때 Drawer 종료 후 이동
+          if (isMobile) Navigator.pop(context);
+          onPressed();
+        }
+      },
+      style: ButtonStyle(
+          alignment: Alignment.centerLeft,
+          foregroundColor:
+              MaterialStateProperty.resolveWith(getForegroundColor),
+          overlayColor:
+              MaterialStateProperty.resolveWith((state) => Colors.transparent),
+          padding: MaterialStateProperty.resolveWith(getPadding)),
+      child: Text(
+        title,
+        style: const TextStyle(fontSize: 20),
+      ),
+    );
+  }
+
+  /// Drawer 버튼 색상
+  Color getForegroundColor(Set<MaterialState> states) {
+    const interactiveStates = <MaterialState>{
+      MaterialState.hovered,
+      MaterialState.pressed,
+    };
+    if (states.any(interactiveStates.contains)) {
+      return CustomColors.purple;
+    }
+    return CustomColors.white;
+  }
+
+  /// Drawer 버튼 이벤트
+  EdgeInsets getPadding(Set<MaterialState> states) {
+    const interactiveStates = <MaterialState>{
+      MaterialState.hovered,
+      MaterialState.pressed,
+    };
+    if (states.any(interactiveStates.contains)) {
+      return const EdgeInsets.only(left: 5);
+    }
+    return EdgeInsets.zero;
+  }
+}
