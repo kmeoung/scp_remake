@@ -5,10 +5,12 @@ abstract class PageClass extends StatelessWidget {
   const PageClass({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) => _render();
+  Widget build(BuildContext context) => _render(context);
 
-  Widget _render() =>
-      ReactWrapper(webScaffold: webScaffold, appScaffold: appScaffold);
+  Widget _render(BuildContext context) {
+    initSetting(context);
+    return ReactWrapper(webScaffold: webScaffold, appScaffold: appScaffold);
+  }
 
   void initSetting(BuildContext context);
   Widget webScaffold(BuildContext context);

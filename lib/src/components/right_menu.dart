@@ -156,6 +156,7 @@ class RightMenu extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (_) => ProjectPage(
+                            projectName: 'project',
                             pid: '$index',
                             uid: _userId,
                             pageType: PROJECT_PAGE_TYPE.ALL),

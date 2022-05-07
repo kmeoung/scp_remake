@@ -11,13 +11,18 @@ class TeamPage extends DefaultTemplate {
   @override
   List<Widget> customDetail(BuildContext context) {
     return [
-      ContentTitle(title: 'My Team'),
-      _homeItemView(tempCount: 1),
-      const SizedBox(
-        height: 40,
-      ),
-      ContentTitle(title: 'Shared Team'),
-      _homeItemView(tempCount: 2),
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ContentTitle(title: 'My Team'),
+          _homeItemView(tempCount: 1),
+          const SizedBox(
+            height: 40,
+          ),
+          ContentTitle(title: 'Shared Team'),
+          _homeItemView(tempCount: 2),
+        ],
+      )
     ];
   }
 

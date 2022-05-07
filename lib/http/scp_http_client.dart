@@ -1,4 +1,5 @@
 import 'dart:convert' as convert;
+import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
@@ -18,6 +19,7 @@ class ScpHttpClient {
     var response = await http.get(url, headers: headers);
     if (response.statusCode >= 200 && response.statusCode < 300) {
       Map<String, dynamic> json = convert.jsonDecode(response.body);
+      print(json);
       int status = json['status'];
       String msg = json['message'];
       if (status >= 200 && status < 300) {
@@ -42,15 +44,17 @@ class ScpHttpClient {
       _baseUrl,
       detailUrl,
     );
-    var response = await http.post(url, headers: headers, body: body);
+    headers ??= {'Content-Type': 'application/json'};
+    String? jsonBody;
+    if (body != null) jsonBody = json.encode(body);
+    var response = await http.post(url, headers: headers, body: jsonBody);
+    print(response.body);
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      print(response.body);
       Map<String, dynamic> json = convert.jsonDecode(response.body);
       int status = json['status'];
       String msg = json['message'];
       if (status >= 200 && status < 300) {
-        Map<String, dynamic> result = json['result'];
-        onSuccess(result, msg);
+        onSuccess({}, msg);
       } else {
         onFailed(msg);
       }
@@ -97,7 +101,10 @@ class ScpHttpClient {
       _baseUrl,
       detailUrl,
     );
-    var response = await http.delete(url, headers: headers, body: body);
+    headers ??= {'Content-Type': 'application/json'};
+    String jsonBody = '';
+    if (body != null) jsonBody = json.encode(body);
+    var response = await http.delete(url, headers: headers, body: jsonBody);
     if (response.statusCode >= 200 && response.statusCode < 300) {
       Map<String, dynamic> json = convert.jsonDecode(response.body);
       int status = json['status'];

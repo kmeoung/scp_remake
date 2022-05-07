@@ -1,8 +1,13 @@
-import 'dart:math';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:provider/src/provider.dart';
+import 'package:refactory_scp/http/scp_http_client.dart';
+import 'package:refactory_scp/json_object/comment_obj.dart';
+import 'package:refactory_scp/json_object/task_and_comment_obj.dart';
+import 'package:refactory_scp/provider/task_controller.dart';
 import 'package:refactory_scp/src/common/colors.dart';
+import 'package:refactory_scp/src/common/comm_param.dart';
 import 'package:refactory_scp/src/components/content_title.dart';
 import 'package:refactory_scp/src/pages/home/add_or_edit_task.dart';
 import 'package:refactory_scp/src/pages/template/default_template.dart';
@@ -11,42 +16,130 @@ class TaskPage extends DefaultTemplate {
   final String uid;
   final String pid;
   final String tid;
-  TaskPage({required this.uid, required this.pid, required this.tid, Key? key})
+  final String projectName;
+  TaskPage(
+      {required this.projectName,
+      required this.uid,
+      required this.pid,
+      required this.tid,
+      Key? key})
       : super(uid, key: key);
+
+  /// Get Task Detail
+  _getTaskDetail(BuildContext context) async {
+    var url = Comm_Params.URL_TASK_DETAIL.replaceAll(Comm_Params.TASK_ID, tid);
+    await ScpHttpClient.get(
+      url,
+      onSuccess: (json, message) {
+        context.read<TaskController>().clear();
+        TaskAndCommentObject task =
+            TaskAndCommentObject.fromJson(json['taskDetail']);
+        context.read<TaskController>().task = task;
+
+        for (Map<String, dynamic> comment in task.commentList) {
+          context.read<TaskController>().add(CommentObject.fromJson(comment));
+        }
+      },
+      onFailed: (message) {
+        context.read<TaskController>().clear();
+        ScaffoldMessenger.of(context).showSnackBar(
+            //SnackBar 구현하는법 context는 위에 BuildContext에 있는 객체를 그대로 가져오면 됨.
+            SnackBar(
+          content: Text(message), //snack bar의 내용. icon, button같은것도 가능하다.
+          duration: const Duration(seconds: 5), //올라와있는 시간
+          action: SnackBarAction(
+            //추가로 작업을 넣기. 버튼넣기라 생각하면 편하다.
+            label: 'close', //버튼이름
+            onPressed: () {}, //버튼 눌렀을때.
+          ),
+        ));
+      },
+    );
+  }
+
+  /// Post Comment Add
+  _postCommentAdd(BuildContext context, String comment) async {
+    var url = Comm_Params.URL_COMMENT_ADD;
+    if (context.read<TaskController>().task != null) {
+      var task = context.read<TaskController>().task!;
+      Map<String, dynamic> body = {
+        "taskId": task.taskId,
+        "userId": int.parse(uid),
+        "commentContent": comment,
+      };
+      await ScpHttpClient.post(
+        url,
+        body: body,
+        onSuccess: (json, message) {
+          commentController.clear();
+          _getTaskDetail(context);
+        },
+        onFailed: (message) {
+          context.read<TaskController>().clear();
+          ScaffoldMessenger.of(context).showSnackBar(
+              //SnackBar 구현하는법 context는 위에 BuildContext에 있는 객체를 그대로 가져오면 됨.
+              SnackBar(
+            content: Text(message), //snack bar의 내용. icon, button같은것도 가능하다.
+            duration: const Duration(seconds: 5), //올라와있는 시간
+            action: SnackBarAction(
+              //추가로 작업을 넣기. 버튼넣기라 생각하면 편하다.
+              label: 'close', //버튼이름
+              onPressed: () {}, //버튼 눌렀을때.
+            ),
+          ));
+        },
+      );
+    }
+  }
 
   @override
   List<Widget> customDetail(BuildContext context) {
     return [
-      ContentTitle(
-        title: 'Project Name $pid',
-        onTapMore: () {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (_) => AddOrEditTask(uid: uid, pid: pid, tid: tid)));
+      ChangeNotifierProvider(
+        create: (_) => TaskController(),
+        builder: (context, child) {
+          _getTaskDetail(context);
+          return Consumer(
+            builder: (context, value, child) => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ContentTitle(
+                  title: projectName,
+                  onTapMore: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) =>
+                                AddOrEditTask(uid: uid, pid: pid, tid: tid)));
+                  },
+                ),
+                _headerTaskPerson(context),
+                const SizedBox(
+                  height: 10,
+                ),
+                _headerTaskContents(context),
+                const SizedBox(
+                  height: 30,
+                ),
+                ...List.generate(
+                  context.watch<TaskController>().comments.length,
+                  (index) => _commentView(
+                      context.watch<TaskController>().comments[index], context),
+                ),
+                const SizedBox(
+                  height: 10,
+                ),
+                _inputCommentView(context),
+              ],
+            ),
+          );
         },
-      ),
-      _headerTaskPerson(),
-      const SizedBox(
-        height: 10,
-      ),
-      _headerTaskContents(),
-      const SizedBox(
-        height: 30,
-      ),
-      ...List.generate(
-        Random().nextInt(10),
-        (index) => _commentView(),
-      ),
-      const SizedBox(
-        height: 10,
-      ),
-      _inputCommentView(),
+      )
     ];
   }
 
   /// 담당자 Widget
-  Widget _headerTaskPerson() {
+  Widget _headerTaskPerson(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
@@ -61,7 +154,7 @@ class TaskPage extends DefaultTemplate {
             padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
             child: Row(
               children: [
-                CircleAvatar(
+                const CircleAvatar(
                   radius: 20,
                   backgroundColor: CustomColors.white,
                 ),
@@ -69,14 +162,17 @@ class TaskPage extends DefaultTemplate {
                   width: 10,
                 ),
                 Text(
-                  'name',
-                  style: TextStyle(color: CustomColors.white, fontSize: 12),
+                  context.watch<TaskController>().task != null
+                      ? context.watch<TaskController>().task!.taskOwner_string
+                      : '',
+                  style:
+                      const TextStyle(color: CustomColors.white, fontSize: 12),
                 ),
               ],
             ),
           ),
         ),
-        Icon(
+        const Icon(
           Icons.arrow_right_alt,
           color: CustomColors.deepPurple,
           size: 40,
@@ -90,17 +186,23 @@ class TaskPage extends DefaultTemplate {
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
             child: Row(
-              children: const [
-                CircleAvatar(
+              children: [
+                const CircleAvatar(
                   radius: 20,
                   backgroundColor: CustomColors.white,
                 ),
-                SizedBox(
+                const SizedBox(
                   width: 10,
                 ),
                 Text(
-                  'name',
-                  style: TextStyle(color: CustomColors.white, fontSize: 12),
+                  context.watch<TaskController>().task != null
+                      ? context
+                          .watch<TaskController>()
+                          .task!
+                          .taskRequester_string
+                      : '',
+                  style:
+                      const TextStyle(color: CustomColors.white, fontSize: 12),
                 ),
               ],
             ),
@@ -110,21 +212,23 @@ class TaskPage extends DefaultTemplate {
     );
   }
 
-  Widget _headerTaskContents() {
+  Widget _headerTaskContents(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.start,
       mainAxisSize: MainAxisSize.max,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Expanded(
+        Expanded(
           flex: 1,
           child: Card(
             color: Colors.white,
             elevation: 5,
             child: Padding(
-              padding: EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(8.0),
               child: Text(
-                  'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium. Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus in, viverra quis, feugiat a, tellus. Phasellus viverra nulla ut metus varius laoreet. Quisque rutrum. Aenean imperdiet. Etiam ultricies nisi vel augue. Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar, hendrerit id, lorem. Maecenas nec odio et ante tincidunt tempus. Donec vitae sapien ut libero venenatis faucibus. Nullam quis ante. Etiam sit amet orci eget eros faucibus tincidunt. Duis leo. Sed fringilla mauris sit amet nibh. Donec sodales sagittis magna. Sed consequat, leo eget bibendum sodales, augue velit cursus nunc,',
+                  context.watch<TaskController>().task != null
+                      ? context.watch<TaskController>().task!.taskContent
+                      : '',
                   overflow: TextOverflow.fade),
             ),
           ),
@@ -134,9 +238,11 @@ class TaskPage extends DefaultTemplate {
           elevation: 5,
           child: Container(
             margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-            child: const Text(
-              'yyyy-MM-dd',
-              style: TextStyle(
+            child: Text(
+              context.watch<TaskController>().task != null
+                  ? context.watch<TaskController>().task!.taskDeadline
+                  : '',
+              style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 color: CustomColors.white,
               ),
@@ -148,7 +254,7 @@ class TaskPage extends DefaultTemplate {
   }
 
   /// Comment View
-  Widget _commentView() {
+  Widget _commentView(CommentObject comment, BuildContext context) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
       elevation: 5.0,
@@ -163,24 +269,25 @@ class TaskPage extends DefaultTemplate {
               padding:
                   const EdgeInsets.symmetric(horizontal: 5.0, vertical: 8.0),
               child: Row(
-                children: const [
-                  CircleAvatar(
+                children: [
+                  const CircleAvatar(
                     radius: 20,
                     backgroundColor: CustomColors.white,
                   ),
-                  SizedBox(
+                  const SizedBox(
                     width: 10,
                   ),
                   Expanded(
                     child: Text(
-                      'name',
-                      style: TextStyle(color: CustomColors.white, fontSize: 12),
+                      comment.commentNickname,
+                      style: const TextStyle(
+                          color: CustomColors.white, fontSize: 12),
                     ),
                   ),
                   Text(
-                    'yyyy-MM-dd\nHH:mm:ss',
+                    comment.commentTime,
                     textAlign: TextAlign.end,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontWeight: FontWeight.normal,
                       color: CustomColors.white,
                     ),
@@ -188,14 +295,16 @@ class TaskPage extends DefaultTemplate {
                 ],
               ),
             ),
-            const Card(
-              color: Colors.white,
-              elevation: 5,
-              child: Padding(
-                padding: EdgeInsets.all(8.0),
-                child: Text(
-                    'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium. Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus in, viverra quis, feugiat a, tellus. Phasellus viverra nulla ut metus varius laoreet. Quisque rutrum. Aenean imperdiet. Etiam ultricies nisi vel augue. Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar, hendrerit id, lorem. Maecenas nec odio et ante tincidunt tempus. Donec vitae sapien ut libero venenatis faucibus. Nullam quis ante. Etiam sit amet orci eget eros faucibus tincidunt. Duis leo. Sed fringilla mauris sit amet nibh. Donec sodales sagittis magna. Sed consequat, leo eget bibendum sodales, augue velit cursus nunc,',
-                    overflow: TextOverflow.fade),
+            SizedBox(
+              width: double.infinity,
+              child: Card(
+                color: Colors.white,
+                elevation: 5,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child:
+                      Text(comment.commentContent, overflow: TextOverflow.fade),
+                ),
               ),
             ),
           ],
@@ -204,7 +313,8 @@ class TaskPage extends DefaultTemplate {
     );
   }
 
-  Widget _inputCommentView() {
+  TextEditingController commentController = TextEditingController();
+  Widget _inputCommentView(BuildContext context) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
       elevation: 5.0,
@@ -214,6 +324,7 @@ class TaskPage extends DefaultTemplate {
         child: TextField(
           textInputAction: TextInputAction.newline,
           maxLines: null,
+          controller: commentController,
           decoration: InputDecoration(
             hintText: 'Input Comment',
             hintStyle:
@@ -228,7 +339,9 @@ class TaskPage extends DefaultTemplate {
                 size: 25,
                 color: Colors.blue,
               ),
-              onPressed: () {},
+              onPressed: () {
+                _postCommentAdd(context, commentController.text);
+              },
             ),
           ),
         ),

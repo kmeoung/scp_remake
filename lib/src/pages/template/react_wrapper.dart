@@ -5,22 +5,28 @@ class ReactBaseSize {
   bool _isWebCheck() => identical(0, 0.0);
 }
 
-class ReactWrapper extends StatelessWidget with ReactBaseSize {
+class ReactWrapper extends StatefulWidget {
+  ReactWrapper({required this.webScaffold, required this.appScaffold});
   final WidgetBuilder webScaffold;
   final WidgetBuilder appScaffold;
 
-  ReactWrapper({required this.webScaffold, required this.appScaffold});
+  @override
+  State<ReactWrapper> createState() => _ReactWrapperState();
+}
 
+class _ReactWrapperState extends State<ReactWrapper> with ReactBaseSize {
   @override
   Widget build(BuildContext context) => _render(context);
+  // 여기서 뷰를 업데이트 하는 부분을 만들 수 있지 않을까?
+  @override
+  initState() {}
 
   Widget _render(BuildContext context) {
     double _width = MediaQuery.of(context).size.width;
-
     if (_width > _standardSize) {
-      return webScaffold(context);
+      return widget.webScaffold(context);
     } else {
-      return appScaffold(context);
+      return widget.appScaffold(context);
     }
   }
 }

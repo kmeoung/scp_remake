@@ -1,12 +1,9 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:refactory_scp/http/scp_http_client.dart';
 import 'package:refactory_scp/json_object/home/home_project_obj.dart';
 import 'package:refactory_scp/json_object/task_obj.dart';
 import 'package:refactory_scp/provider/home_controller.dart';
-import 'package:refactory_scp/provider/project_controller.dart';
 import 'package:refactory_scp/src/common/colors.dart';
 import 'package:refactory_scp/src/common/comm_param.dart';
 import 'package:refactory_scp/src/components/content_title.dart';
@@ -23,27 +20,31 @@ class HomePage extends DefaultTemplate {
 
   @override
   List<Widget> customDetail(BuildContext context) {
-    _getData(context);
     return [
       ChangeNotifierProvider<HomeController>(
         create: (_) => HomeController(),
         builder: (context, child) {
-          return Column(
-            children: [
-              ContentTitle(title: 'My Project'),
-              _homeItemView(
-                  projects: context
-                      .watch<HomeController>()
-                      .get(projectType: PROJECT_TYPE.MY)),
-              const SizedBox(
-                height: 40,
-              ),
-              ContentTitle(title: 'Shared Project'),
-              _homeItemView(
-                  projects: context
-                      .watch<HomeController>()
-                      .get(projectType: PROJECT_TYPE.ANOTHER)),
-            ],
+          _getData(context);
+          return Consumer<HomeController>(
+            builder: (context, value, child) {
+              return Column(
+                children: [
+                  ContentTitle(title: 'My Project'),
+                  _homeItemView(
+                      projects: context
+                          .watch<HomeController>()
+                          .get(projectType: PROJECT_TYPE.MY)),
+                  const SizedBox(
+                    height: 40,
+                  ),
+                  ContentTitle(title: 'Shared Project'),
+                  _homeItemView(
+                      projects: context
+                          .watch<HomeController>()
+                          .get(projectType: PROJECT_TYPE.ANOTHER)),
+                ],
+              );
+            },
           );
         },
       )
@@ -77,8 +78,17 @@ class HomePage extends DefaultTemplate {
       },
       onFailed: (message) {
         context.read<HomeController>().clear(projectType: PROJECT_TYPE.ALL);
-        // Get.snackbar('Server Error', message,
-        //     snackPosition: SnackPosition.BOTTOM);
+        ScaffoldMessenger.of(context).showSnackBar(
+            //SnackBar 구현하는법 context는 위에 BuildContext에 있는 객체를 그대로 가져오면 됨.
+            SnackBar(
+          content: Text(message), //snack bar의 내용. icon, button같은것도 가능하다.
+          duration: Duration(seconds: 5), //올라와있는 시간
+          action: SnackBarAction(
+            //추가로 작업을 넣기. 버튼넣기라 생각하면 편하다.
+            label: 'close', //버튼이름
+            onPressed: () {}, //버튼 눌렀을때.
+          ),
+        ));
       },
     );
   }
@@ -112,6 +122,7 @@ class HomePage extends DefaultTemplate {
           context,
           MaterialPageRoute(
             builder: (_) => ProjectPage(
+              projectName: project.projectName,
               pid: '${project.projectId}',
               uid: _userId,
               pageType: PROJECT_PAGE_TYPE.ALL,
@@ -190,7 +201,9 @@ class HomePage extends DefaultTemplate {
                       if (project.tasklist.isEmpty) {
                         return Expanded(
                           child: _taskCard(context, project.projectId, -1,
-                              title: '할 일을 추가해 주세요.', color: CustomColors.gray),
+                              projectTitle: project.projectName,
+                              title: '할 일을 추가해 주세요.',
+                              color: CustomColors.gray),
                         );
                       } else {
                         TaskObject task = TaskObject.fromJson(
@@ -222,7 +235,9 @@ class HomePage extends DefaultTemplate {
                         return Expanded(
                           child: _taskCard(
                               context, project.projectId, task.taskId,
-                              title: task.taskContent, color: color),
+                              projectTitle: project.projectName,
+                              title: task.taskContent,
+                              color: color),
                         );
                       }
                     },
@@ -256,7 +271,9 @@ class HomePage extends DefaultTemplate {
 
   /// View Binding Task Card
   Widget _taskCard(BuildContext context, int pid, int tid,
-      {required String title, required Color color}) {
+      {required String projectTitle,
+      required String title,
+      required Color color}) {
     return InkWell(
       onTap: () {
         if (tid > -1) {
@@ -264,6 +281,7 @@ class HomePage extends DefaultTemplate {
               context,
               MaterialPageRoute(
                   builder: (_) => TaskPage(
+                        projectName: projectTitle,
                         uid: _userId,
                         pid: '$pid',
                         tid: '$tid',
@@ -273,6 +291,7 @@ class HomePage extends DefaultTemplate {
             context,
             MaterialPageRoute(
               builder: (_) => ProjectPage(
+                projectName: title,
                 uid: _userId,
                 pid: '$pid',
                 pageType: PROJECT_PAGE_TYPE.ALL,
