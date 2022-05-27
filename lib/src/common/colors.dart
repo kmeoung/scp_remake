@@ -8,12 +8,20 @@ class CustomColors {
   // static const Color white = Color(0xFFFEFEFE);
   // static const Color purple = Color(0xFFFCCAAC);
 
-  static const Color whitePurple = Color(0xFFE6E7FF);
-  static const Color deepPurple = Color(0xFF7570AE);
-  static const Color yellow = Color(0xFFFFD34C);
+  // static const Color whitePurple = Color(0xFFE6E7FF);
+  // static const Color deepPurple = Color(0xFF7570AE);
+  // static const Color yellow = Color(0xFFFFD34C);
+  // static const Color green = Color(0xFF80C439);
+  // static const Color white = Color(0xFFFEFEFE);
+  // static const Color purple = Color(0xFF9F9BC6);
+  // static const Color gray = Color(0xFFBDBDBD);
+
+  static const Color whitePurple = Color(0xFFF0FCFF);
+  static const Color deepPurple = Color(0xFF9FD6CD);
+  static const Color yellow = Color(0xFFEF9A9A);
   static const Color green = Color(0xFF80C439);
   static const Color white = Color(0xFFFEFEFE);
-  static const Color purple = Color(0xFF9F9BC6);
+  static const Color purple = Color(0xFFF4D284);
   static const Color gray = Color(0xFFBDBDBD);
 
   // 하늘 주황 보라 초록 네이

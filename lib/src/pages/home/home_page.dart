@@ -18,37 +18,41 @@ class HomePage extends DefaultTemplate {
       : _userId = uid,
         super(uid, key: key);
 
-  @override
-  List<Widget> customDetail(BuildContext context) {
-    return [
-      ChangeNotifierProvider<HomeController>(
-        create: (_) => HomeController(),
-        builder: (context, child) {
-          _getData(context);
-          return Consumer<HomeController>(
-            builder: (context, value, child) {
-              return Column(
-                children: [
-                  ContentTitle(title: 'My Project'),
-                  _homeItemView(
-                      projects: context
-                          .watch<HomeController>()
-                          .get(projectType: PROJECT_TYPE.MY)),
-                  const SizedBox(
-                    height: 40,
-                  ),
-                  ContentTitle(title: 'Shared Project'),
-                  _homeItemView(
-                      projects: context
-                          .watch<HomeController>()
-                          .get(projectType: PROJECT_TYPE.ANOTHER)),
-                ],
-              );
-            },
-          );
-        },
-      )
-    ];
+  Widget customDetail(ScrollController controller, BuildContext context) {
+    return ChangeNotifierProvider<HomeController>(
+      create: (_) => HomeController(),
+      builder: (context, child) {
+        _getData(context);
+        return Consumer<HomeController>(
+          builder: (context, value, child) {
+            return SingleChildScrollView(
+              controller: controller,
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ContentTitle(title: 'My Project'),
+                    _homeItemView(
+                        projects: context
+                            .watch<HomeController>()
+                            .get(projectType: PROJECT_TYPE.MY)),
+                    const SizedBox(
+                      height: 40,
+                    ),
+                    ContentTitle(title: 'Shared Project'),
+                    _homeItemView(
+                        projects: context
+                            .watch<HomeController>()
+                            .get(projectType: PROJECT_TYPE.ANOTHER)),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   /// Get Server
@@ -111,6 +115,7 @@ class HomePage extends DefaultTemplate {
 
   /// View Binding Project Card
   Widget _projectCard(BuildContext context, ProjectObject project) {
+    var isMine = project.userCode == IS_HAVE.leader;
     int taskSize = project.tasklist.length;
     int successTasks = project.tasklist.where((element) {
       var taskObject = TaskObject.fromJson(element);
@@ -125,6 +130,7 @@ class HomePage extends DefaultTemplate {
               projectName: project.projectName,
               pid: '${project.projectId}',
               uid: _userId,
+              project: project,
               pageType: PROJECT_PAGE_TYPE.ALL,
             ),
           ),
@@ -162,23 +168,26 @@ class HomePage extends DefaultTemplate {
                         textAlign: TextAlign.left,
                       ),
                     ),
-                    IconButton(
-                      splashRadius: 20,
-                      iconSize: 30,
-                      onPressed: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => AddOrEditProject(
-                                uid: _userId,
-                                pid: '${project.projectId}',
-                              ),
-                            ));
-                      },
-                      padding: EdgeInsets.zero,
-                      icon: const Icon(
-                        Icons.more_horiz,
-                        color: CustomColors.white,
+                    Visibility(
+                      visible: isMine,
+                      child: IconButton(
+                        splashRadius: 20,
+                        iconSize: 30,
+                        onPressed: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => AddOrEditProject(
+                                  uid: _userId,
+                                  project: project,
+                                ),
+                              ));
+                        },
+                        padding: EdgeInsets.zero,
+                        icon: const Icon(
+                          Icons.more_horiz,
+                          color: CustomColors.white,
+                        ),
                       ),
                     ),
                   ],
@@ -202,6 +211,8 @@ class HomePage extends DefaultTemplate {
                         return Expanded(
                           child: _taskCard(context, project.projectId, -1,
                               projectTitle: project.projectName,
+                              isComplete: 0,
+                              project: project,
                               title: '할 일을 추가해 주세요.',
                               color: CustomColors.gray),
                         );
@@ -236,7 +247,9 @@ class HomePage extends DefaultTemplate {
                           child: _taskCard(
                               context, project.projectId, task.taskId,
                               projectTitle: project.projectName,
+                              isComplete: task.taskComplete,
                               title: task.taskContent,
+                              project: project,
                               color: color),
                         );
                       }
@@ -272,20 +285,25 @@ class HomePage extends DefaultTemplate {
   /// View Binding Task Card
   Widget _taskCard(BuildContext context, int pid, int tid,
       {required String projectTitle,
+      required int isComplete,
+      required ProjectObject project,
       required String title,
       required Color color}) {
     return InkWell(
       onTap: () {
         if (tid > -1) {
           Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (_) => TaskPage(
-                        projectName: projectTitle,
-                        uid: _userId,
-                        pid: '$pid',
-                        tid: '$tid',
-                      )));
+            context,
+            MaterialPageRoute(
+              builder: (_) => TaskPage(
+                taskComplete: isComplete,
+                projectName: projectTitle,
+                uid: _userId,
+                pid: '$pid',
+                tid: '$tid',
+              ),
+            ),
+          );
         } else {
           Navigator.push(
             context,
@@ -294,6 +312,7 @@ class HomePage extends DefaultTemplate {
                 projectName: title,
                 uid: _userId,
                 pid: '$pid',
+                project: project,
                 pageType: PROJECT_PAGE_TYPE.ALL,
               ),
             ),
@@ -349,5 +368,11 @@ class HomePage extends DefaultTemplate {
   @override
   void initSetting(BuildContext context) {
     // TODO: implement initSetting
+  }
+
+  @override
+  Widget nonScrollWidget(BuildContext context) {
+    // TODO: implement nonScrollWidget
+    return Container();
   }
 }

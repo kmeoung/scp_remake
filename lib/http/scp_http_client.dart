@@ -17,20 +17,20 @@ class ScpHttpClient {
       detailUrl,
     );
     var response = await http.get(url, headers: headers);
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      Map<String, dynamic> json = convert.jsonDecode(response.body);
-      print(json);
-      int status = json['status'];
-      String msg = json['message'];
-      if (status >= 200 && status < 300) {
-        Map<String, dynamic> result = json['result'];
-        onSuccess(result, msg);
-      } else {
-        onFailed(msg);
-      }
+    // if (response.statusCode >= 200 && response.statusCode < 300) {
+    Map<String, dynamic> json = convert.jsonDecode(response.body);
+    print(json);
+    int status = json['status'];
+    String msg = json['message'];
+    if (status >= 200 && status < 300) {
+      Map<String, dynamic> result = json['result'];
+      onSuccess(result, msg);
     } else {
-      onFailed('server connected failed');
+      onFailed(msg);
     }
+    // } else {
+    //   onFailed('server connected failed');
+    // }
   }
 
   static Future<void> post(
@@ -74,14 +74,17 @@ class ScpHttpClient {
       _baseUrl,
       detailUrl,
     );
-    var response = await http.patch(url, headers: headers, body: body);
+    // headers ??= {'Content-Type': 'application/json'};
+    String? jsonBody;
+    if (body != null) jsonBody = json.encode(body);
+    var response = await http.patch(url, headers: headers, body: jsonBody);
+    print(response.body);
     if (response.statusCode >= 200 && response.statusCode < 300) {
       Map<String, dynamic> json = convert.jsonDecode(response.body);
       int status = json['status'];
       String msg = json['message'];
       if (status >= 200 && status < 300) {
-        Map<String, dynamic> result = json['result'];
-        onSuccess(result, msg);
+        onSuccess({}, msg);
       } else {
         onFailed(msg);
       }

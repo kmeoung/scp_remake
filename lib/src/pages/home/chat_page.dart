@@ -1,239 +1,200 @@
-import 'dart:async';
-import 'dart:math';
-
-import 'package:flutter/cupertino.dart';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:refactory_scp/http/scp_http_client.dart';
+import 'package:refactory_scp/json_object/chat_obj.dart';
+import 'package:refactory_scp/provider/chat_controller.dart';
 import 'package:refactory_scp/src/common/colors.dart';
 import 'package:refactory_scp/src/components/content_title.dart';
-import 'package:refactory_scp/src/pages/home/add_or_edit_task.dart';
 import 'package:refactory_scp/src/pages/template/default_template.dart';
 import 'package:stomp_dart_client/stomp.dart';
 import 'package:stomp_dart_client/stomp_config.dart';
 import 'package:stomp_dart_client/stomp_frame.dart';
+import 'package:refactory_scp/src/common/comm_param.dart';
 
 class ChatPage extends DefaultTemplate {
   final String uid;
-  ChatPage({required this.uid, Key? key}) : super(uid, key: key);
+  final String chatRoomId;
 
-  // void onConnect(StompFrame frame) {
-  //   stompClient.subscribe(
-  //     destination: '/topic/test/subscription',
-  //     callback: (frame) {
-  //       List<dynamic>? result = json.decode(frame.body!);
-  //       print(result);
-  //     },
-  //   );
-  //
-  //   Timer.periodic(Duration(seconds: 10), (_) {
-  //     stompClient.send(
-  //       destination: '/app/test/endpoints',
-  //       body: json.encode({'a': 123}),
-  //     );
-  //   });
-  // }
-  //
-  // final stompClient = StompClient(
-  //   config: StompConfig(
-  //     url: 'ws://localhost:8080',
-  //     onConnect: onConnect,
-  //     beforeConnect: () async {
-  //       print('waiting to connect...');
-  //       await Future.delayed(Duration(milliseconds: 200));
-  //       print('connecting...');
-  //     },
-  //     onWebSocketError: (dynamic error) => print(error.toString()),
-  //     stompConnectHeaders: {'Authorization': 'Bearer yourToken'},
-  //     webSocketConnectHeaders: {'Authorization': 'Bearer yourToken'},
-  //   ),
-  // );
-  //
-  // void main() {
-  //   stompClient.activate();
-  // }
+  StompClient? stompClient;
 
-  @override
-  List<Widget> customDetail(BuildContext context) {
-    return [
-      ContentTitle(title: 'Chat', onTapMore: () {}),
-      _headerTaskPerson(),
-      const SizedBox(
-        height: 10,
-      ),
-      _headerTaskContents(),
-      const SizedBox(
-        height: 30,
-      ),
-      ...List.generate(
-        Random().nextInt(10),
-        (index) => _commentView(),
-      ),
-      const SizedBox(
-        height: 10,
-      ),
-      _inputCommentView(),
-    ];
+  ChatPage({required this.uid, required this.chatRoomId, Key? key})
+      : super(uid, key: key);
+
+  final socketUrl = 'ws://mmgg.kr/chat';
+
+  sendMessage({required String msg}) {
+    stompClient!.send(destination: '/app/$chatRoomId/$uid', body: msg);
   }
 
-  /// 담당자 Widget
-  Widget _headerTaskPerson() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.5),
-              borderRadius: const BorderRadius.all(Radius.circular(10)),
-              border: Border.all(
-                  color: CustomColors.deepPurple.withOpacity(0.2), width: 1)),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-            child: Row(
+  /// Get Chat comment
+  _getData(BuildContext context) async {
+    var url =
+        Comm_Params.URL_CHAT.replaceAll(Comm_Params.CHAT_ROOM_ID, chatRoomId);
+    await ScpHttpClient.get(
+      url,
+      onSuccess: (json, message) {
+        context.read<ChatController>().clear();
+        Map<String, dynamic> message = json['messages'];
+        List<dynamic> msgList = message['messageList'];
+
+        if (msgList.isNotEmpty) {
+          for (Map<String, dynamic> json in msgList) {
+            ChatObject obj = ChatObject.fromJson(json);
+
+            context.read<ChatController>().add(obj);
+          }
+
+          mainScrollController.animateTo(
+              mainScrollController.position.maxScrollExtent + 100,
+              duration: const Duration(milliseconds: 1),
+              curve: Curves.linear);
+        }
+      },
+      onFailed: (message) {
+        context.read<ChatController>().clear();
+        ScaffoldMessenger.of(context).showSnackBar(
+            //SnackBar 구현하는법 context는 위에 BuildContext에 있는 객체를 그대로 가져오면 됨.
+            SnackBar(
+          content: Text(message), //snack bar의 내용. icon, button같은것도 가능하다.
+          duration: const Duration(seconds: 5), //올라와있는 시간
+          action: SnackBarAction(
+            //추가로 작업을 넣기. 버튼넣기라 생각하면 편하다.
+            label: 'close', //버튼이름
+            onPressed: () {}, //버튼 눌렀을때.
+          ),
+        ));
+      },
+    );
+  }
+
+  connectStomp(BuildContext context) async {
+    if (stompClient == null) {
+      stompClient = StompClient(
+          config: StompConfig(
+        url: socketUrl,
+        onConnect: (frame) {
+          stompClient!.subscribe(
+            destination: '/topic/$chatRoomId',
+            callback: (StompFrame frame) {
+              print(frame.body);
+              if (frame.body != null) {
+                Map<String, dynamic> obj = json.decode(frame.body!);
+                var chat = ChatObject.fromJson(obj);
+                context.read<ChatController>().add(chat);
+                mainScrollController.animateTo(
+                    mainScrollController.position.maxScrollExtent + 100,
+                    duration: const Duration(milliseconds: 1),
+                    curve: Curves.linear);
+              }
+            },
+          );
+        },
+        onStompError: (StompFrame) => print(StompFrame),
+        onWebSocketError: (e) => print('webSocket err : $e'),
+      ));
+      stompClient!.activate();
+    } else {
+      stompClient!.deactivate();
+    }
+  }
+
+  Widget customDetail(ScrollController scrollController, BuildContext context) {
+    return ChangeNotifierProvider<ChatController>(
+      create: (_) => ChatController(),
+      builder: (context, child) {
+        connectStomp(context);
+        _getData(context);
+        return Consumer<ChatController>(
+          builder: (context, value, child) {
+            return Column(
               children: [
-                CircleAvatar(
+                Expanded(
+                  child: SingleChildScrollView(
+                    controller: scrollController,
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          ContentTitle(title: 'Chat', onTapMore: () {}),
+                          const SizedBox(
+                            height: 30,
+                          ),
+                          ...List.generate(
+                            context.watch<ChatController>().get().length,
+                            (index) => _commentView(
+                                context.watch<ChatController>().get()[index]),
+                          ),
+                          const SizedBox(
+                            height: 10,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                _sendMessage(context),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// Comment View
+  Widget _commentView(ChatObject chat) {
+    return Row(
+      mainAxisSize: MainAxisSize.max,
+      children: [
+        if (chat.userId.toString() == uid) Expanded(child: Container()),
+        Column(
+          crossAxisAlignment: chat.userId.toString() == uid
+              ? CrossAxisAlignment.end
+              : CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const CircleAvatar(
                   radius: 20,
-                  backgroundColor: CustomColors.white,
+                  backgroundColor: CustomColors.purple,
                 ),
                 const SizedBox(
                   width: 10,
                 ),
                 Text(
-                  'name',
-                  style: TextStyle(color: CustomColors.white, fontSize: 12),
+                  chat.userNickname,
+                  style:
+                      const TextStyle(color: CustomColors.yellow, fontSize: 12),
                 ),
               ],
             ),
-          ),
-        ),
-        Icon(
-          Icons.arrow_right_alt,
-          color: CustomColors.deepPurple,
-          size: 40,
-        ),
-        Container(
-          decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.5),
-              borderRadius: const BorderRadius.all(Radius.circular(10)),
-              border: Border.all(
-                  color: CustomColors.deepPurple.withOpacity(0.2), width: 1)),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-            child: Row(
-              children: const [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: CustomColors.white,
-                ),
-                SizedBox(
-                  width: 10,
-                ),
-                Text(
-                  'name',
-                  style: TextStyle(color: CustomColors.white, fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _headerTaskContents() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      mainAxisSize: MainAxisSize.max,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Expanded(
-          flex: 1,
-          child: Card(
-            color: Colors.white,
-            elevation: 5,
-            child: Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text(
-                  'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium. Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus in, viverra quis, feugiat a, tellus. Phasellus viverra nulla ut metus varius laoreet. Quisque rutrum. Aenean imperdiet. Etiam ultricies nisi vel augue. Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar, hendrerit id, lorem. Maecenas nec odio et ante tincidunt tempus. Donec vitae sapien ut libero venenatis faucibus. Nullam quis ante. Etiam sit amet orci eget eros faucibus tincidunt. Duis leo. Sed fringilla mauris sit amet nibh. Donec sodales sagittis magna. Sed consequat, leo eget bibendum sodales, augue velit cursus nunc,',
-                  overflow: TextOverflow.fade),
-            ),
-          ),
-        ),
-        Card(
-          color: CustomColors.yellow,
-          elevation: 5,
-          child: Container(
-            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-            child: const Text(
-              'yyyy-MM-dd',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: CustomColors.white,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Comment View
-  Widget _commentView() {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-      elevation: 5.0,
-      color: CustomColors.deepPurple.withOpacity(0.7),
-      child: Container(
-        padding: const EdgeInsets.all(5.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 5.0, vertical: 8.0),
-              child: Row(
-                children: const [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: CustomColors.white,
-                  ),
-                  SizedBox(
-                    width: 10,
-                  ),
-                  Expanded(
-                    child: Text(
-                      'name',
-                      style: TextStyle(color: CustomColors.white, fontSize: 12),
-                    ),
-                  ),
-                  Text(
-                    'yyyy-MM-dd\nHH:mm:ss',
-                    textAlign: TextAlign.end,
-                    style: TextStyle(
-                      fontWeight: FontWeight.normal,
-                      color: CustomColors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Card(
+            Card(
               color: Colors.white,
               elevation: 5,
               child: Padding(
                 padding: EdgeInsets.all(8.0),
-                child: Text(
-                    'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium. Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus in, viverra quis, feugiat a, tellus. Phasellus viverra nulla ut metus varius laoreet. Quisque rutrum. Aenean imperdiet. Etiam ultricies nisi vel augue. Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar, hendrerit id, lorem. Maecenas nec odio et ante tincidunt tempus. Donec vitae sapien ut libero venenatis faucibus. Nullam quis ante. Etiam sit amet orci eget eros faucibus tincidunt. Duis leo. Sed fringilla mauris sit amet nibh. Donec sodales sagittis magna. Sed consequat, leo eget bibendum sodales, augue velit cursus nunc,',
-                    overflow: TextOverflow.fade),
+                child: Text(chat.messageContent, overflow: TextOverflow.fade),
               ),
+            ),
+            Text(
+              chat.messageTime,
+              style: const TextStyle(color: CustomColors.yellow, fontSize: 12),
+            ),
+            const SizedBox(
+              height: 20,
             ),
           ],
         ),
-      ),
+        if (chat.userId.toString() != uid) Expanded(child: Container()),
+      ],
     );
   }
 
-  Widget _inputCommentView() {
+  TextEditingController commentController = TextEditingController();
+
+  Widget _sendMessage(BuildContext context) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
       elevation: 5.0,
@@ -241,8 +202,15 @@ class ChatPage extends DefaultTemplate {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
         child: TextField(
-          textInputAction: TextInputAction.newline,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (value) {
+            if (commentController.text.isNotEmpty) {
+              sendMessage(msg: commentController.text);
+              commentController.clear();
+            }
+          },
           maxLines: null,
+          controller: commentController,
           decoration: InputDecoration(
             hintText: 'Input Comment',
             hintStyle:
@@ -257,7 +225,12 @@ class ChatPage extends DefaultTemplate {
                 size: 25,
                 color: Colors.blue,
               ),
-              onPressed: () {},
+              onPressed: () {
+                if (commentController.text.isNotEmpty) {
+                  sendMessage(msg: commentController.text);
+                  commentController.clear();
+                }
+              },
             ),
           ),
         ),
@@ -267,6 +240,7 @@ class ChatPage extends DefaultTemplate {
 
   @override
   FloatingActionButton? floatingActionButton(BuildContext context) {
+    // TODO: implement floatingActionButton
     return null;
   }
 

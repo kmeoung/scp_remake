@@ -21,6 +21,11 @@ class HomeController extends ChangeNotifier {
       return myProjects;
     } else if (projectType == PROJECT_TYPE.ANOTHER) {
       return anotherProjects;
+    } else if (projectType == PROJECT_TYPE.ALL) {
+      List<ProjectObject> all = [];
+      all.addAll(myProjects);
+      all.addAll(anotherProjects);
+      return all;
     }
     return myProjects;
   }

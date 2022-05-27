@@ -5,7 +5,7 @@ class TaskDetailObject {
   final String taskContent;
   final int taskRequester;
   final String taskRequester_string;
-  final int taskComplete;
+  int taskComplete;
   final int taskAccept;
   final String taskRequesttime;
   final String taskDeadline;
