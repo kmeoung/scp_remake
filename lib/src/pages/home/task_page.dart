@@ -164,9 +164,6 @@ class TaskPage extends DefaultTemplate {
       },
     );
   }
-
-
-
   updateTaskSuccessed(BuildContext context) {
     var url = Comm_Params.URL_PROJECT_WETHER
         .replaceAll(Comm_Params.USER_ID, uid)

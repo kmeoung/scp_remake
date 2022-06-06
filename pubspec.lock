@@ -169,7 +169,11 @@ packages:
       name: js
       url: "https://pub.dartlang.org"
     source: hosted
+<<<<<<< HEAD
     version: "0.6.4"
+=======
+    version: "0.6.3"
+>>>>>>> 7e672513a48f6e033a099f322428d7eddea44b42
   lints:
     dependency: transitive
     description:
@@ -184,6 +188,7 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.12.11"
+<<<<<<< HEAD
   material_color_utilities:
     dependency: transitive
     description:
@@ -191,6 +196,8 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.1.4"
+=======
+>>>>>>> 7e672513a48f6e033a099f322428d7eddea44b42
   meta:
     dependency: transitive
     description:
@@ -279,7 +286,11 @@ packages:
       name: test_api
       url: "https://pub.dartlang.org"
     source: hosted
+<<<<<<< HEAD
     version: "0.4.9"
+=======
+    version: "0.4.3"
+>>>>>>> 7e672513a48f6e033a099f322428d7eddea44b42
   typed_data:
     dependency: transitive
     description:

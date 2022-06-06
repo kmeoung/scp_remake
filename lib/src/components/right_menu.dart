@@ -8,8 +8,10 @@ import 'package:refactory_scp/src/common/comm_param.dart';
 import 'package:refactory_scp/src/components/profile_dialog.dart';
 import 'package:refactory_scp/src/pages/home/home_page.dart';
 import 'package:refactory_scp/src/pages/home/project_page.dart';
+
 import 'package:refactory_scp/src/pages/team/team_page.dart';
 import 'package:refactory_scp/src/pages/team/team_room_page.dart';
+
 
 /// Desktop -> 오른쪽 메뉴
 /// Mobile -> Drawer
@@ -44,6 +46,7 @@ class _RightMenuState extends State<RightMenu> {
   /// Get Server
   _getData(BuildContext context) async {
     var url = Comm_Params.URL_HOME.replaceAll(Comm_Params.USER_ID, widget._userId);
+
     await ScpHttpClient.get(
       url,
       onSuccess: (json, message) {

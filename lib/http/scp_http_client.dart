@@ -44,10 +44,9 @@ class ScpHttpClient {
     print(headers);
     print(url);
     var response = await http.get(url, headers: headers);
-    print('코드 : ${response.statusCode}');
     // if (response.statusCode >= 200 && response.statusCode < 300) {
     Map<String, dynamic> json = convert.jsonDecode(response.body);
-    print(json);
+
     int status = json['status'];
     String msg = json['message'];
     if (status >= 200 && status < 300) {
@@ -56,6 +55,9 @@ class ScpHttpClient {
     } else {
       onFailed(msg);
     }
+    // } else {
+    //   onFailed('server connected failed');
+    // }
   }
 
   static Future<void> post(

@@ -6,7 +6,6 @@ import 'package:refactory_scp/json_object/task_detail_obj.dart';
 class TaskController extends ChangeNotifier {
   TaskAndCommentObject? task;
   List<CommentObject> comments = [];
-
   int _taskSuccessed = 0;
 
 

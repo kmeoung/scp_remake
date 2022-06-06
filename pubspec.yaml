@@ -39,10 +39,13 @@ dependencies:
   stomp_dart_client: ^0.4.4
   fluttertoast: ^8.0.9
   intl: ^0.17.0
+<<<<<<< HEAD
   dio: ^4.0.6
   file_picker: ^4.6.1
 #  google_sign_in: ^5.3.2
 #  shared_preferences: ^2.0.15
+=======
+>>>>>>> 7e672513a48f6e033a099f322428d7eddea44b42
 
 dev_dependencies:
   flutter_test:
