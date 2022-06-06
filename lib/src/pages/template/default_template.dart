@@ -84,30 +84,16 @@ abstract class DefaultTemplate extends PageClass {
     );
   }
 
-  final ScrollController _scrollController = ScrollController();
+  final ScrollController mainScrollController = ScrollController();
 
   FloatingActionButton? floatingActionButton(BuildContext context);
 
   /// View Custom Detail
-  List<Widget> customDetail(BuildContext context);
+  Widget customDetail(ScrollController scrollController, BuildContext context);
 
   /// Page Scaffold State
   Widget _contentsDetail(BuildContext context) {
-    return SingleChildScrollView(
-      controller: _scrollController,
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: customDetail(context)
-            ..add(
-              const SizedBox(
-                height: 80,
-              ),
-            ),
-        ),
-      ),
-    );
+    return customDetail(mainScrollController, context);
   }
 
   Widget _mobileLayout(BuildContext context) {
@@ -117,7 +103,7 @@ abstract class DefaultTemplate extends PageClass {
   Widget _desktopLayout(BuildContext context) {
     return Scrollbar(
       isAlwaysShown: true,
-      controller: _scrollController,
+      controller: mainScrollController,
       child: _contentsDetail(context),
     );
   }

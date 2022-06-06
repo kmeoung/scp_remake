@@ -12,7 +12,7 @@ class ProjectObject {
     return ProjectObject(
       json['projectName'],
       json['tasklist'],
-      (json['userCode'] as String) == 'p_leader'
+      (json['userCode'] as String) == 'p-leader'
           ? IS_HAVE.leader
           : IS_HAVE.member,
       json['projectId'],

@@ -13,4 +13,10 @@ class ProjectController extends ChangeNotifier {
     tasks.clear();
     notifyListeners();
   }
+
+  chageComplete(int index) {
+    int currentComplete = tasks[index].taskComplete;
+    tasks[index].taskComplete = currentComplete == 1 ? 0 : 1;
+    notifyListeners();
+  }
 }

@@ -1,7 +1,12 @@
+import 'dart:js';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/src/provider.dart';
+import 'package:refactory_scp/http/file_http_client.dart';
 import 'package:refactory_scp/http/scp_http_client.dart';
 import 'package:refactory_scp/json_object/comment_obj.dart';
 import 'package:refactory_scp/json_object/task_and_comment_obj.dart';
@@ -9,7 +14,7 @@ import 'package:refactory_scp/provider/task_controller.dart';
 import 'package:refactory_scp/src/common/colors.dart';
 import 'package:refactory_scp/src/common/comm_param.dart';
 import 'package:refactory_scp/src/components/content_title.dart';
-import 'package:refactory_scp/src/pages/home/add_or_edit_task.dart';
+import 'package:refactory_scp/src/pages/add_pages/add_or_edit_task.dart';
 import 'package:refactory_scp/src/pages/template/default_template.dart';
 
 class TaskPage extends DefaultTemplate {
@@ -17,13 +22,18 @@ class TaskPage extends DefaultTemplate {
   final String pid;
   final String tid;
   final String projectName;
+  final taskComplete;
+
   TaskPage(
       {required this.projectName,
       required this.uid,
       required this.pid,
       required this.tid,
+      required this.taskComplete,
       Key? key})
       : super(uid, key: key);
+
+  BuildContext? getContext;
 
   /// Get Task Detail
   _getTaskDetail(BuildContext context) async {
@@ -39,6 +49,11 @@ class TaskPage extends DefaultTemplate {
         for (Map<String, dynamic> comment in task.commentList) {
           context.read<TaskController>().add(CommentObject.fromJson(comment));
         }
+
+        mainScrollController.animateTo(
+            mainScrollController.position.maxScrollExtent + 100,
+            duration: const Duration(milliseconds: 1),
+            curve: Curves.linear);
       },
       onFailed: (message) {
         context.read<TaskController>().clear();
@@ -92,58 +107,113 @@ class TaskPage extends DefaultTemplate {
     }
   }
 
-  @override
-  List<Widget> customDetail(BuildContext context) {
-    return [
-      ChangeNotifierProvider(
-        create: (_) => TaskController(),
-        builder: (context, child) {
-          _getTaskDetail(context);
-          return Consumer(
-            builder: (context, value, child) => Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+  Widget customDetail(ScrollController controller, BuildContext context) {
+    return ChangeNotifierProvider<TaskController>(
+      create: (_) => TaskController(),
+      builder: (context, child) {
+        _getTaskDetail(context);
+        return Consumer<TaskController>(
+          builder: (context, value, child) {
+            return Column(
               children: [
-                ContentTitle(
-                  title: projectName,
-                  onTapMore: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) =>
-                                AddOrEditTask(uid: uid, pid: pid, tid: tid)));
-                  },
-                ),
-                _headerTaskPerson(context),
-                const SizedBox(
-                  height: 10,
-                ),
-                _headerTaskContents(context),
-                const SizedBox(
-                  height: 30,
-                ),
-                ...List.generate(
-                  context.watch<TaskController>().comments.length,
-                  (index) => _commentView(
-                      context.watch<TaskController>().comments[index], context),
-                ),
-                const SizedBox(
-                  height: 10,
+                Expanded(
+                  child: SingleChildScrollView(
+                    controller: controller,
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ContentTitle(
+                            title: projectName,
+                            onTapMore: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => AddOrEditTask(
+                                          uid: uid, pid: pid, tid: tid)));
+                            },
+                          ),
+                          _headerTaskPerson(context),
+                          const SizedBox(
+                            height: 10,
+                          ),
+                          _headerTaskContents(context),
+                          const SizedBox(
+                            height: 30,
+                          ),
+                          ...List.generate(
+                            context.watch<TaskController>().comments.length,
+                            (index) => _commentView(
+                                context.watch<TaskController>().comments[index],
+                                context),
+                          ),
+                          const SizedBox(
+                            height: 10,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
                 _inputCommentView(context),
               ],
-            ),
-          );
-        },
-      )
-    ];
+            );
+          },
+        );
+      },
+    );
+  }
+
+
+
+  updateTaskSuccessed(BuildContext context) {
+    var url = Comm_Params.URL_PROJECT_WETHER
+        .replaceAll(Comm_Params.USER_ID, uid)
+        .replaceAll(Comm_Params.TASK_ID, tid);
+
+    ScpHttpClient.patch(
+      url,
+      onSuccess: (json, message) {
+        // todo : 여기서 업데이트
+        int isSuccessed = context.read<TaskController>().isSuccessed();
+        context.read<TaskController>().setSuccessed(isSuccessed == 1 ? 0 : 1);
+      },
+      onFailed: (message) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            //SnackBar 구현하는법 context는 위에 BuildContext에 있는 객체를 그대로 가져오면 됨.
+            SnackBar(
+          content: Text(message), //snack bar의 내용. icon, button같은것도 가능하다.
+          duration: const Duration(seconds: 5), //올라와있는 시간
+          action: SnackBarAction(
+            //추가로 작업을 넣기. 버튼넣기라 생각하면 편하다.
+            label: 'close', //버튼이름
+            onPressed: () {}, //버튼 눌렀을때.
+          ),
+        ));
+      },
+    );
   }
 
   /// 담당자 Widget
   Widget _headerTaskPerson(BuildContext context) {
+    int isSuccessed = context.watch<TaskController>().isSuccessed();
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
+        IconButton(
+          onPressed: () {
+            updateTaskSuccessed(context);
+          },
+          icon: Icon(
+            (isSuccessed == 1) ? Icons.check_circle : Icons.circle_outlined,
+            color: CustomColors.deepPurple,
+          ),
+        ),
+        const SizedBox(
+          width: 10,
+        ),
         Container(
           decoration: BoxDecoration(
               color: Colors.black.withOpacity(0.5),
@@ -240,7 +310,8 @@ class TaskPage extends DefaultTemplate {
             margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
             child: Text(
               context.watch<TaskController>().task != null
-                  ? context.watch<TaskController>().task!.taskDeadline
+                  ? DateFormat('yyyy-MM-dd').format(DateTime.parse(
+                      context.watch<TaskController>().task!.taskDeadline))
                   : '',
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
@@ -314,6 +385,7 @@ class TaskPage extends DefaultTemplate {
   }
 
   TextEditingController commentController = TextEditingController();
+
   Widget _inputCommentView(BuildContext context) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
@@ -322,8 +394,11 @@ class TaskPage extends DefaultTemplate {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
         child: TextField(
-          textInputAction: TextInputAction.newline,
           maxLines: null,
+          textInputAction: TextInputAction.go,
+          onSubmitted: (value) {
+            _postCommentAdd(context, commentController.text);
+          },
           controller: commentController,
           decoration: InputDecoration(
             hintText: 'Input Comment',
@@ -340,7 +415,9 @@ class TaskPage extends DefaultTemplate {
                 color: Colors.blue,
               ),
               onPressed: () {
-                _postCommentAdd(context, commentController.text);
+                if (commentController.text.isNotEmpty) {
+                  _postCommentAdd(context, commentController.text);
+                }
               },
             ),
           ),

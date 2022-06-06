@@ -23,19 +23,9 @@ class ContentTitle extends StatelessWidget {
           Text(
             title,
             style: const TextStyle(
-              // 그라데이션 필요할 시 추가
               fontSize: 30,
               fontWeight: FontWeight.bold,
               color: CustomColors.deepPurple,
-              // foreground: Paint()
-              //   ..shader = ui.Gradient.linear(
-              //     const Offset(0, 20),
-              //     const Offset(150, 20),
-              //     <Color>[
-              //       CustomColors.black.withOpacity(0.2),
-              //       CustomColors.black,
-              //     ],
-              //   ),
             ),
             textAlign: TextAlign.left,
           ),
@@ -65,10 +55,6 @@ class ContentTitle extends StatelessWidget {
         thickness: 2,
         height: 5,
       ),
-      // Divider(
-      //   color: CustomColors.red,
-      //   thickness: 2,
-      // ),
       const SizedBox(
         height: 10,
       ),

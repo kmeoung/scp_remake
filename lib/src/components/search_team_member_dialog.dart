@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:refactory_scp/http/scp_http_client.dart';
+import 'package:refactory_scp/json_object/search_project_member_obj.dart';
 import 'package:refactory_scp/json_object/search_user_obj.dart';
+import 'package:refactory_scp/provider/search_project_member_controller.dart';
 import 'package:refactory_scp/provider/team_search_controller.dart';
 import 'package:refactory_scp/src/common/colors.dart';
 import 'package:refactory_scp/src/common/comm_param.dart';
@@ -11,40 +13,46 @@ import 'package:refactory_scp/src/common/comm_param.dart';
 import 'content_title.dart';
 
 /// 팀원 추가 Dialog
-class AddTeamMemberDialog extends StatelessWidget {
+class SearchTeamMemberDialog extends StatelessWidget {
+  final String pid;
+
   // 가로 사이즈
   double width;
+
   // 세로 사이즈
   double height;
-  String uid;
-  AddTeamMemberDialog(
-      {Key? key, required this.uid, required this.width, required this.height})
+
+  SearchTeamMemberDialog(
+      {Key? key, required this.pid, required this.width, required this.height})
       : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => TeamSearchController(),
-      builder: (context, child) => Consumer(
-        builder: (context, value, child) => _customDialog(context),
-      ),
+      create: (_) => SearchProjectMemeberController(),
+      builder: (context, child) {
+        _getTeamMember(context);
+        return Consumer(
+          builder: (context, value, child) => _customDialog(context),
+        );
+      },
     );
   }
 
   /// Get Team Member
-  _getTeamMember(BuildContext context, {required String keyword}) async {
-    var url = Comm_Params.URL_SEARCH_USER
-        .replaceAll(Comm_Params.USER_ID, uid)
-        .replaceAll(Comm_Params.EMAIL_KEYWORD, keyword);
+  _getTeamMember(BuildContext context) async {
+    var url =
+        Comm_Params.URL_PROJECT_MEMBER.replaceAll(Comm_Params.PROJECT_ID, pid);
     await ScpHttpClient.get(
       url,
       onSuccess: (json, message) {
-        context.read<TeamSearchController>().clear();
-        List<dynamic> users = json['emailUser'];
+        context.read<SearchProjectMemeberController>().clear();
+        List<dynamic> users = json['userlist'];
         if (users.isNotEmpty) {
           for (Map<String, dynamic> json in users) {
-            SearchUserObject user = SearchUserObject.fromJson(json);
-            context.read<TeamSearchController>().add(user);
+            SearchProjectMemberObject user =
+                SearchProjectMemberObject.fromJson(json);
+            context.read<SearchProjectMemeberController>().add(user);
           }
         }
       },
@@ -64,52 +72,16 @@ class AddTeamMemberDialog extends StatelessWidget {
     );
   }
 
-  Timer? _searchTimer;
-
   // Dialog Contents
   Widget _customDialogContents(BuildContext context) {
-    List<SearchUserObject> users = context.watch<TeamSearchController>().get();
+    List<SearchProjectMemberObject> users =
+        context.watch<SearchProjectMemeberController>().get();
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ContentTitle(title: 'Team Member Select'),
-          Card(
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10.0)),
-            elevation: 5.0,
-            color: Colors.white,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: TextField(
-                textInputAction: TextInputAction.done,
-                maxLines: 1,
-                onChanged: (keyword) {
-                  if (_searchTimer != null) _searchTimer!.cancel();
-
-                  if (keyword.isNotEmpty) {
-                    _searchTimer = Timer(const Duration(milliseconds: 500),
-                        () => _getTeamMember(context, keyword: keyword));
-                  } else {
-                    _searchTimer = Timer(const Duration(milliseconds: 500),
-                        () => context.read<TeamSearchController>().clear());
-                  }
-                },
-                decoration: InputDecoration(
-                  hintText: 'Search Team Member',
-                  hintStyle: TextStyle(
-                      color: CustomColors.deepPurple.withOpacity(0.5)),
-                  label: null,
-                  focusedBorder: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(
-            height: 10,
-          ),
+          ContentTitle(title: 'Project Member Select'),
           Expanded(
             child: ListView(
               children: List.generate(

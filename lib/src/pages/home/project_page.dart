@@ -3,13 +3,14 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:refactory_scp/http/scp_http_client.dart';
+import 'package:refactory_scp/json_object/home/home_project_obj.dart';
 import 'package:refactory_scp/json_object/task_detail_obj.dart';
 import 'package:refactory_scp/provider/project_controller.dart';
 import 'package:refactory_scp/src/common/colors.dart';
 import 'package:refactory_scp/src/common/comm_param.dart';
 import 'package:refactory_scp/src/components/content_title.dart';
-import 'package:refactory_scp/src/pages/home/add_or_edit_project.dart';
-import 'package:refactory_scp/src/pages/home/add_or_edit_task.dart';
+import 'package:refactory_scp/src/pages/add_pages/add_or_edit_project.dart';
+import 'package:refactory_scp/src/pages/add_pages/add_or_edit_task.dart';
 import 'package:refactory_scp/src/pages/home/task_page.dart';
 import 'package:refactory_scp/src/pages/template/default_template.dart';
 
@@ -20,11 +21,13 @@ class ProjectPage extends DefaultTemplate {
   final String pid;
   final String uid;
   final String projectName;
+  final ProjectObject project;
 
   ProjectPage(
       {required this.projectName,
       required this.pid,
       required this.uid,
+      required this.project,
       Key? key,
       required this.pageType})
       : super(uid, key: key);
@@ -33,6 +36,32 @@ class ProjectPage extends DefaultTemplate {
   final String MY_TASK = 'MY Task';
   final String RECEIVE_TASK = 'RECEIVE Task';
   final String SEND_TASK = 'SEND Task';
+
+  updateTaskSuccessed(BuildContext context, int tid, int index) {
+    var url = Comm_Params.URL_PROJECT_WETHER
+        .replaceAll(Comm_Params.USER_ID, uid)
+        .replaceAll(Comm_Params.TASK_ID, '$tid');
+    ScpHttpClient.patch(
+      url,
+      onSuccess: (json, message) {
+        // todo : 여기서 업데이트
+        context.read<ProjectController>().chageComplete(index);
+      },
+      onFailed: (message) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            //SnackBar 구현하는법 context는 위에 BuildContext에 있는 객체를 그대로 가져오면 됨.
+            SnackBar(
+          content: Text(message), //snack bar의 내용. icon, button같은것도 가능하다.
+          duration: const Duration(seconds: 5), //올라와있는 시간
+          action: SnackBarAction(
+            //추가로 작업을 넣기. 버튼넣기라 생각하면 편하다.
+            label: 'close', //버튼이름
+            onPressed: () {}, //버튼 눌렀을때.
+          ),
+        ));
+      },
+    );
+  }
 
   /// Get All Task
   _getAllTask(BuildContext context) async {
@@ -130,7 +159,9 @@ class ProjectPage extends DefaultTemplate {
         if (tasks.isNotEmpty) {
           for (Map<String, dynamic> json in tasks) {
             TaskDetailObject task = TaskDetailObject.fromJson(json);
-            context.read<ProjectController>().add(task);
+            if (task.taskAccept > -1) {
+              context.read<ProjectController>().add(task);
+            }
           }
         }
       },
@@ -142,60 +173,67 @@ class ProjectPage extends DefaultTemplate {
     );
   }
 
-  @override
-  List<Widget> customDetail(BuildContext context) {
-    return [
-      ChangeNotifierProvider<ProjectController>(
-        create: (_) => ProjectController(),
-        builder: (context, child) {
-          String projectSubTitle;
-          switch (pageType) {
-            case PROJECT_PAGE_TYPE.ALL:
-              projectSubTitle = ALL_TASK;
-              _getAllTask(context);
-              break;
-            case PROJECT_PAGE_TYPE.MY:
-              projectSubTitle = MY_TASK;
-              _getMyTask(context);
-              break;
-            case PROJECT_PAGE_TYPE.RECEIVE:
-              projectSubTitle = RECEIVE_TASK;
-              _getReceiveTask(context);
-              break;
-            case PROJECT_PAGE_TYPE.SEND:
-              projectSubTitle = SEND_TASK;
-              _getRequestTask(context);
-              break;
-          }
-          return Consumer<ProjectController>(
-            builder: (context, value, child) => Column(children: [
-              ContentTitle(
-                title: projectName,
-                onTapMore: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => AddOrEditProject(
-                        uid: uid,
-                        pid: pid,
-                      ),
+  Widget customDetail(ScrollController controller, BuildContext context) {
+    return ChangeNotifierProvider<ProjectController>(
+      create: (_) => ProjectController(),
+      builder: (context, child) {
+        String projectSubTitle;
+        switch (pageType) {
+          case PROJECT_PAGE_TYPE.ALL:
+            projectSubTitle = ALL_TASK;
+            _getAllTask(context);
+            break;
+          case PROJECT_PAGE_TYPE.MY:
+            projectSubTitle = MY_TASK;
+            _getMyTask(context);
+            break;
+          case PROJECT_PAGE_TYPE.RECEIVE:
+            projectSubTitle = RECEIVE_TASK;
+            _getReceiveTask(context);
+            break;
+          case PROJECT_PAGE_TYPE.SEND:
+            projectSubTitle = SEND_TASK;
+            _getRequestTask(context);
+            break;
+        }
+        return Consumer<ProjectController>(
+          builder: (context, value, child) {
+            return SingleChildScrollView(
+              controller: controller,
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ContentTitle(
+                      title: projectName,
+                      onTapMore: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => AddOrEditProject(
+                              uid: uid,
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
+                    _header(context),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    pageType == PROJECT_PAGE_TYPE.ALL ||
+                            pageType == PROJECT_PAGE_TYPE.MY
+                        ? _allMyContentView(context, projectSubTitle)
+                        : _receiveSendContentView(context, pageType)
+                  ],
+                ),
               ),
-              _header(context),
-              const SizedBox(
-                height: 20,
-              ),
-              pageType == PROJECT_PAGE_TYPE.ALL ||
-                      pageType == PROJECT_PAGE_TYPE.MY
-                  ? _allMyContentView(context, projectSubTitle)
-                  : _receiveSendContentView(context, pageType)
-            ]),
-          );
-        },
-      )
-    ];
+            );
+          },
+        );
+      },
+    );
   }
 
   Widget _headerTitle(BuildContext context,
@@ -231,6 +269,7 @@ class ProjectPage extends DefaultTemplate {
                 projectName: projectName,
                 pid: pid,
                 uid: uid,
+                project: project,
                 pageType: headerType,
               ),
             ),
@@ -367,7 +406,8 @@ class ProjectPage extends DefaultTemplate {
                 }
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                  child: _taskCard(context, task.taskId,
+                  child: _taskCard(
+                      context, task.taskComplete, index, task.taskId,
                       title: task.taskContent, color: color),
                 );
               },
@@ -384,13 +424,30 @@ class ProjectPage extends DefaultTemplate {
     List<TaskDetailObject> tasks = context.watch<ProjectController>().tasks;
     return Column(
       children: List.generate(
-          tasks.length, (index) => _receiveRequestCard(tasks[index], pageType)),
+          tasks.length,
+          (index) => _receiveRequestCard(tasks[index], pageType,
+              context: context, tid: tasks[index].taskId)),
+    );
+  }
+
+  /// patch task agreement
+  _taskAgreement(BuildContext context, int tid, int selected) {
+    var url = Comm_Params.URL_TASK_ACCEPT_REFUSE
+        .replaceAll(Comm_Params.TASK_ID, '$tid')
+        .replaceAll(Comm_Params.SELECTED, '$selected');
+
+    ScpHttpClient.patch(
+      url,
+      onSuccess: (json, message) {
+        _getReceiveTask(context);
+      },
+      onFailed: (message) {},
     );
   }
 
   // Receive Request Card Widget
-  Widget _receiveRequestCard(
-          TaskDetailObject task, PROJECT_PAGE_TYPE pageType) =>
+  Widget _receiveRequestCard(TaskDetailObject task, PROJECT_PAGE_TYPE pageType,
+          {required BuildContext context, required int tid}) =>
       Card(
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
@@ -446,18 +503,28 @@ class ProjectPage extends DefaultTemplate {
               mainAxisSize: MainAxisSize.max,
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Expanded(
-                  child: _taskRequestBtn(
-                      title: 'Accept',
-                      color: CustomColors.whitePurple,
-                      onTap: () {}),
-                ),
-                Expanded(
-                  child: _taskRequestBtn(
-                      title: 'Cancel',
-                      color: CustomColors.yellow,
-                      onTap: () {}),
-                ),
+                pageType == PROJECT_PAGE_TYPE.RECEIVE
+                    ? Expanded(
+                        child: _taskRequestBtn(
+                            title: 'Accept',
+                            color: CustomColors.whitePurple,
+                            onTap: () {
+                              if (pageType == PROJECT_PAGE_TYPE.RECEIVE) {
+                                _taskAgreement(context, tid, 1);
+                              }
+                            }),
+                      )
+                    : Container(),
+                pageType == PROJECT_PAGE_TYPE.RECEIVE
+                    ? Expanded(
+                        child: _taskRequestBtn(
+                            title: 'Cancel',
+                            color: CustomColors.yellow,
+                            onTap: () {
+                              _taskAgreement(context, tid, -1);
+                            }),
+                      )
+                    : Container(),
               ],
             )
           ],
@@ -487,7 +554,7 @@ class ProjectPage extends DefaultTemplate {
     );
   }
 
-  Widget _taskCard(BuildContext context, int tid,
+  Widget _taskCard(BuildContext context, int isSuccessed, int index, int tid,
       {required String title, required Color color}) {
     return InkWell(
       onTap: () {
@@ -495,6 +562,7 @@ class ProjectPage extends DefaultTemplate {
             context,
             MaterialPageRoute(
                 builder: (_) => TaskPage(
+                    taskComplete: isSuccessed,
                     projectName: projectName,
                     uid: uid,
                     pid: pid,
@@ -509,6 +577,20 @@ class ProjectPage extends DefaultTemplate {
           width: double.infinity,
           child: Row(
             children: [
+              IconButton(
+                onPressed: () {
+                  updateTaskSuccessed(context, tid, index);
+                },
+                icon: Icon(
+                  (isSuccessed == 1)
+                      ? Icons.check_circle
+                      : Icons.circle_outlined,
+                  color: CustomColors.white,
+                ),
+              ),
+              const SizedBox(
+                width: 10,
+              ),
               Expanded(
                 child: Text(
                   title,
@@ -547,5 +629,11 @@ class ProjectPage extends DefaultTemplate {
   @override
   void initSetting(BuildContext context) {
     // TODO: implement initSetting
+  }
+
+  @override
+  Widget nonScrollWidget(BuildContext context) {
+    // TODO: implement nonScrollWidget
+    return Container();
   }
 }
