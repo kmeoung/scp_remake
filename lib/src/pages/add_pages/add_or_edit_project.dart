@@ -32,22 +32,32 @@ class AddOrEditProject extends DefaultTemplate {
 
     List<dynamic> newMembers = [];
 
-    _mMember.forEach((element) {
+    for (var element in _mMember) {
       Map<String, dynamic> member = {
         "userId": element.userId,
         "projectinuserMaker": uid,
         "projectinuserCommoncode":
-            element.projectinuserCommoncode == MEMBER_PERMISSION.P_LEADER
+            element.projectinuserCommoncode == MEMBER_PERMISSION.LEADER
                 ? 'p-leader'
                 : 'p-member',
       };
       newMembers.add(member);
-    });
+    }
+
+    if (_titleController.value.text.isEmpty) {
+      Fluttertoast.showToast(
+          msg: '제목을 입력해주세요',
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.CENTER,
+          timeInSecForIosWeb: 2,
+          backgroundColor: Colors.black,
+          textColor: Colors.white,
+          fontSize: 16.0);
+      return;
+    }
 
     Map<String, dynamic> body = {
-      "title": _titleController.value.text.isEmpty
-          ? ''
-          : _titleController.value.text,
+      "title": _titleController.value.text,
       // "userId": int.parse(uid),
       "member": newMembers,
     };
@@ -62,18 +72,56 @@ class AddOrEditProject extends DefaultTemplate {
               builder: (context) => HomePage(uid: uid),
             ));
       },
-      onFailed: (message) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            //SnackBar 구현하는법 context는 위에 BuildContext에 있는 객체를 그대로 가져오면 됨.
-            SnackBar(
-          content: Text(message), //snack bar의 내용. icon, button같은것도 가능하다.
-          duration: Duration(seconds: 5), //올라와있는 시간
-          action: SnackBarAction(
-            //추가로 작업을 넣기. 버튼넣기라 생각하면 편하다.
-            label: 'close', //버튼이름
-            onPressed: () {}, //버튼 눌렀을때.
-          ),
-        ));
+    );
+  }
+
+  _patchModidyProject(BuildContext context) {
+    if (project == null) return;
+
+    String url = Comm_Params.URL_MODIFY_RPOJECT
+        .replaceAll(Comm_Params.PROJECT_ID, '${project!.projectId}');
+
+    List<dynamic> newMembers = [];
+
+    for (var element in _mMember) {
+      Map<String, dynamic> member = {
+        "userId": element.userId,
+        "projectinuserMaker": uid,
+        "projectinuserCommoncode":
+            element.projectinuserCommoncode == MEMBER_PERMISSION.LEADER
+                ? 'p-leader'
+                : 'p-member',
+      };
+      newMembers.add(member);
+    }
+
+    if (_titleController.value.text.isEmpty) {
+      Fluttertoast.showToast(
+          msg: '제목을 입력해주세요',
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.CENTER,
+          timeInSecForIosWeb: 2,
+          backgroundColor: Colors.black,
+          textColor: Colors.white,
+          fontSize: 16.0);
+      return;
+    }
+
+    Map<String, dynamic> body = {
+      "title": _titleController.value.text,
+      // "userId": int.parse(uid),
+      "member": newMembers,
+    };
+
+    ScpHttpClient.patch(
+      url,
+      body: body,
+      onSuccess: (json, message) {
+        Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HomePage(uid: uid),
+            ));
       },
     );
   }
@@ -84,16 +132,14 @@ class AddOrEditProject extends DefaultTemplate {
     return ChangeNotifierProvider(
       create: (_) => TeamMemberController(),
       builder: (context, child) {
-        _mMember.clear();
+
         var member = TeamMemberDialogObject(
-            '본인', int.parse(uid), int.parse(uid), MEMBER_PERMISSION.P_LEADER);
-        _mMember.add(member);
+            '본인', int.parse(uid), int.parse(uid), MEMBER_PERMISSION.LEADER);
         context.read<TeamMemberController>().addMember(member);
         if (isEdit) {
-          _titleController.text = project!.projectName;
-          // project!.
+          if(project!.projectName.isEmpty) _titleController.text = project!.projectName;
         }
-
+        _mMember = context.watch<TeamMemberController>().getMember();
         return Consumer<TeamMemberController>(
           builder: (context, value, child) => SingleChildScrollView(
             controller: controller,
@@ -191,8 +237,7 @@ class AddOrEditProject extends DefaultTemplate {
 
           for (SearchUserObject suo in result) {
             var member = TeamMemberDialogObject(suo.userNickname, suo.userId,
-                int.parse(uid), MEMBER_PERMISSION.P_MEMBER);
-            _mMember.add(member);
+                int.parse(uid), MEMBER_PERMISSION.MEMBER);
             context.read<TeamMemberController>().addMember(member);
           }
         },
@@ -229,8 +274,7 @@ class AddOrEditProject extends DefaultTemplate {
             },
           );
           var member = TeamMemberDialogObject(result.userNickname,
-              result.userId, int.parse(uid), MEMBER_PERMISSION.P_MEMBER);
-          _mMember.add(member);
+              result.userId, int.parse(uid), MEMBER_PERMISSION.MEMBER);
           context.read<TeamMemberController>().addMember(member);
         },
         child: Container(
@@ -279,11 +323,16 @@ class AddOrEditProject extends DefaultTemplate {
                     ),
                   ),
                   Visibility(
-                    visible: member.projectinuserCommoncode != MEMBER_PERMISSION.P_LEADER,
+                    visible: isEdit
+                        ? false
+                        : member.projectinuserCommoncode !=
+                            MEMBER_PERMISSION.LEADER,
                     child: IconButton(
                       splashRadius: 20,
                       onPressed: () {
-                        context.read<TeamMemberController>().removeMember(member);
+                        context
+                            .read<TeamMemberController>()
+                            .removeMember(member);
                       },
                       icon: const Icon(
                         Icons.close,
@@ -310,7 +359,7 @@ class AddOrEditProject extends DefaultTemplate {
               height: 50,
               width: double.infinity,
               child: Text(
-                member.projectinuserCommoncode == MEMBER_PERMISSION.P_LEADER
+                member.projectinuserCommoncode == MEMBER_PERMISSION.LEADER
                     ? '생성자'
                     : '멤버',
                 style: const TextStyle(
@@ -327,7 +376,11 @@ class AddOrEditProject extends DefaultTemplate {
   FloatingActionButton? floatingActionButton(BuildContext context) {
     return FloatingActionButton.extended(
       onPressed: () {
-        _addProject(context);
+        if (isEdit) {
+          _patchModidyProject(context);
+        } else {
+          _addProject(context);
+        }
       },
       label: Text(
         isEdit ? 'Edit' : 'Create',
@@ -337,7 +390,7 @@ class AddOrEditProject extends DefaultTemplate {
         Icons.edit,
         color: CustomColors.white,
       ),
-      backgroundColor: CustomColors.deepPurple,
+      backgroundColor: CustomColors.purple,
     );
   }
 

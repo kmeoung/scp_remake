@@ -173,26 +173,29 @@ class HomePage extends DefaultTemplate {
                       ),
                     ),
                     Visibility(
-                      visible: isMine,
-                      child: IconButton(
-                        splashRadius: 20,
-                        iconSize: 30,
-                        onPressed: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => AddOrEditProject(
-                                  uid: _userId,
-                                  project: project,
-                                ),
-                              ));
-                        },
-                        padding: EdgeInsets.zero,
-                        icon: const Icon(
-                          Icons.more_horiz,
-                          color: CustomColors.white,
-                        ),
-                      ),
+                        visible: isMine,
+                        child: PopupMenuButton(
+                          padding: const EdgeInsets.all(0),
+                          iconSize: 30,
+                          icon: const Icon(Icons.more_horiz,color: CustomColors.white,),
+                          itemBuilder: (context){
+                            return const [
+                              PopupMenuItem(child: Text('수정'),value: 1,),
+                            ];
+                          },
+                          onSelected: (i) {
+                            if(i == 1) {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => AddOrEditProject(
+                                      uid: _userId,
+                                      project: project,
+                                    ),
+                                  ));
+                            }
+                          },
+                        )
                     ),
                   ],
                 ),
@@ -365,7 +368,7 @@ class HomePage extends DefaultTemplate {
         Icons.add,
         color: CustomColors.white,
       ),
-      backgroundColor: CustomColors.deepPurple,
+      backgroundColor: CustomColors.purple,
     );
   }
 

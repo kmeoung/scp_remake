@@ -622,7 +622,7 @@ class ProjectPage extends DefaultTemplate {
         Icons.add,
         color: CustomColors.white,
       ),
-      backgroundColor: CustomColors.deepPurple,
+      backgroundColor: CustomColors.purple,
     );
   }
 

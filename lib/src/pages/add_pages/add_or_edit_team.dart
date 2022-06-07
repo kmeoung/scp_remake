@@ -2,18 +2,19 @@ import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 import 'package:refactory_scp/http/scp_http_client.dart';
 import 'package:refactory_scp/json_object/search_user_obj.dart';
 import 'package:refactory_scp/json_object/team/team_member_dialog_obj.dart';
+import 'package:refactory_scp/main.dart';
 import 'package:refactory_scp/provider/team_member_controller.dart';
 import 'package:refactory_scp/src/common/colors.dart';
 import 'package:refactory_scp/src/common/comm_param.dart';
 import 'package:refactory_scp/src/components/dialog/add_team_dialog.dart';
 import 'package:refactory_scp/src/components/content_title.dart';
 import 'package:refactory_scp/src/components/dialog/add_team_member_dialog.dart';
-import 'package:refactory_scp/src/pages/home/home_page.dart';
-import 'package:refactory_scp/src/pages/home/team_page.dart';
+import 'package:refactory_scp/src/pages/team/team_page.dart';
 import 'package:refactory_scp/src/pages/template/default_template.dart';
 
 class AddOrEditTeam extends DefaultTemplate {
@@ -21,32 +22,42 @@ class AddOrEditTeam extends DefaultTemplate {
   final String? tid;
 
   AddOrEditTeam({required this.uid, this.tid, Key? key}) : super(uid, key: key);
-  String _mTitle = '';
-  List<TeamMemberDialogObject> _mMember = [];
 
   bool isEdit = false;
+  List<TeamMemberDialogObject> _mMemberList = [];
 
-  _addProject(BuildContext context) {
-    const url = Comm_Params.URL_PROJECT_ADD;
+  _postAddTeam(BuildContext context) {
+    const url = Comm_Params.URL_TEAM_INSERT;
+
+    if(titleController.value.text.isEmpty){
+      Fluttertoast.showToast(
+          msg: '제목을 입력해주세요',
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.CENTER,
+          timeInSecForIosWeb: 2,
+          backgroundColor: Colors.black,
+          textColor: Colors.white,
+          fontSize: 16.0);
+      return;
+    }
 
     List<dynamic> newMembers = [];
-
-    _mMember.forEach((element) {
+    for (var element in _mMemberList) {
       Map<String, dynamic> member = {
         "userId": element.userId,
-        "projectinuserMaker": uid,
-        "projectinuserCommoncode":
-            element.projectinuserMaker == MEMBER_PERMISSION.P_LEADER
-                ? 'p-leader'
-                : 'p-member',
+        "teaminuserMaker":
+            element.projectinuserCommoncode == MEMBER_PERMISSION.LEADER ? 1 : 0,
+        "teaminuserCommoncode":
+            element.projectinuserCommoncode == MEMBER_PERMISSION.LEADER
+                ? 't-leader'
+                : 't-member',
       };
       newMembers.add(member);
-    });
+    }
 
     Map<String, dynamic> body = {
-      "title": _mTitle,
-      "userId": int.parse(uid),
-      "member": newMembers,
+      "teamName": titleController.value.text,
+      "teamMembers": newMembers,
     };
 
     ScpHttpClient.post(
@@ -59,18 +70,78 @@ class AddOrEditTeam extends DefaultTemplate {
               builder: (context) => TeamPage(uid: uid),
             ));
       },
-      onFailed: (message) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            //SnackBar 구현하는법 context는 위에 BuildContext에 있는 객체를 그대로 가져오면 됨.
-            SnackBar(
-          content: Text(message), //snack bar의 내용. icon, button같은것도 가능하다.
-          duration: Duration(seconds: 5), //올라와있는 시간
-          action: SnackBarAction(
-            //추가로 작업을 넣기. 버튼넣기라 생각하면 편하다.
-            label: 'close', //버튼이름
-            onPressed: () {}, //버튼 눌렀을때.
-          ),
-        ));
+    );
+  }
+
+  _httpModifyTeam(BuildContext context) {
+    const url = Comm_Params.URL_TEAM_MODIFY;
+
+    if (tid == null) return;
+
+    if(titleController.value.text.isEmpty){
+      Fluttertoast.showToast(
+          msg: '제목을 입력해주세요',
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.CENTER,
+          timeInSecForIosWeb: 2,
+          backgroundColor: Colors.black,
+          textColor: Colors.white,
+          fontSize: 16.0);
+      return;
+    }
+
+    List<dynamic> newMembers = [];
+    for (var element in _mMemberList) {
+      Map<String, dynamic> member = {
+        "userId": element.userId,
+        "teaminuserCommoncode":
+            element.projectinuserCommoncode == MEMBER_PERMISSION.LEADER
+                ? 't-leader'
+                : 't-member',
+      };
+      newMembers.add(member);
+    }
+
+    Map<String, dynamic> body = {
+      "teamId": tid,
+      "teamName": titleController.value.text,
+      "teamMembers": newMembers,
+    };
+
+    ScpHttpClient.put(
+      url,
+      body: body,
+      onSuccess: (json, message) {
+        Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TeamPage(uid: uid),
+            ));
+      },
+    );
+  }
+
+  _getTeamModifyInfo(BuildContext context) {
+    String url =
+        Comm_Params.URL_TEAM_MODIFY_INFO.replaceAll(Comm_Params.TEAM_ID, tid!);
+
+    ScpHttpClient.get(
+      url,
+      onSuccess: (json, message) {
+        Map<String, dynamic> modifyTeamInfo = json['modifyTeamInfo'];
+        String teamName = modifyTeamInfo['teamName'];
+        titleController.value = TextEditingValue(text: teamName);
+        List<dynamic> members = modifyTeamInfo['teamMembers'];
+        for(Map<String,dynamic> member in members){
+          int userId = member['userId'];
+          String userName = member['userNickname'];
+          String teaminuserCommoncode = member['teaminuserCommoncode'];
+          int teaminuserMaker = member['teaminuserMaker'];
+
+          var tdo = TeamMemberDialogObject(
+              teaminuserCommoncode == 't-leader' ? '본인' : userName, userId, teaminuserMaker,teaminuserCommoncode == 't-leader' ? MEMBER_PERMISSION.LEADER : MEMBER_PERMISSION.MEMBER);
+          context.read<TeamMemberController>().addMember(tdo);
+        }
       },
     );
   }
@@ -81,14 +152,17 @@ class AddOrEditTeam extends DefaultTemplate {
     return ChangeNotifierProvider(
       create: (_) => TeamMemberController(),
       builder: (context, child) {
-        _mMember.clear();
-        var member = TeamMemberDialogObject(
-            '본인', int.parse(uid), int.parse(uid), MEMBER_PERMISSION.P_LEADER);
-        _mMember.add(member);
-        context.read<TeamMemberController>().addMember(member);
+        if(isEdit){
+          _getTeamModifyInfo(context);
+        }else {
+          var member = TeamMemberDialogObject(
+              '본인', int.parse(uid), 1, MEMBER_PERMISSION.LEADER);
+          context.read<TeamMemberController>().addMember(member);
+        }
 
-        return Consumer<TeamMemberController>(
-          builder: (context, value, child) => SingleChildScrollView(
+        return Consumer<TeamMemberController>(builder: (context, value, child) {
+          _mMemberList = context.watch<TeamMemberController>().getMember();
+          return SingleChildScrollView(
             controller: controller,
             child: Padding(
               padding: const EdgeInsets.all(20.0),
@@ -132,12 +206,13 @@ class AddOrEditTeam extends DefaultTemplate {
                   ),
               ),
             ),
-          ),
-        );
+          );
+        });
       },
     );
   }
 
+  TextEditingController titleController = TextEditingController();
   Widget _header(String title) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
@@ -148,9 +223,7 @@ class AddOrEditTeam extends DefaultTemplate {
         child: TextField(
           textInputAction: TextInputAction.next,
           maxLines: null,
-          onChanged: (value) {
-            _mTitle = value;
-          },
+          controller: titleController,
           decoration: InputDecoration(
             hintText: title,
             hintStyle:
@@ -186,8 +259,7 @@ class AddOrEditTeam extends DefaultTemplate {
 
           for (SearchUserObject suo in result) {
             var member = TeamMemberDialogObject(suo.userNickname, suo.userId,
-                int.parse(uid), MEMBER_PERMISSION.P_MEMBER);
-            _mMember.add(member);
+                0, MEMBER_PERMISSION.MEMBER);
             context.read<TeamMemberController>().addMember(member);
           }
         },
@@ -224,8 +296,7 @@ class AddOrEditTeam extends DefaultTemplate {
             },
           );
           var member = TeamMemberDialogObject(result.userNickname,
-              result.userId, int.parse(uid), MEMBER_PERMISSION.P_MEMBER);
-          _mMember.add(member);
+              result.userId, 0, MEMBER_PERMISSION.MEMBER);
           context.read<TeamMemberController>().addMember(member);
         },
         child: Container(
@@ -276,10 +347,13 @@ class AddOrEditTeam extends DefaultTemplate {
                     ),
                   ),
                   Visibility(
-                    visible: member.projectinuserCommoncode != MEMBER_PERMISSION.P_LEADER,
+                    visible: isEdit ? false : member.projectinuserCommoncode !=
+                        MEMBER_PERMISSION.LEADER,
                     child: IconButton(
                       splashRadius: 20,
-                      onPressed: () {},
+                      onPressed: () {
+                        context.read<TeamMemberController>().removeMember(member);
+                      },
                       icon: const Icon(
                         Icons.close,
                         color: CustomColors.white,
@@ -302,8 +376,10 @@ class AddOrEditTeam extends DefaultTemplate {
             child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 width: double.infinity,
+                height: 50,
+                alignment: Alignment.centerLeft,
                 child: Text(
-                  member.projectinuserCommoncode == MEMBER_PERMISSION.P_LEADER
+                  member.projectinuserCommoncode == MEMBER_PERMISSION.LEADER
                       ? '생성자'
                       : '멤버',
                   style: const TextStyle(
@@ -319,7 +395,11 @@ class AddOrEditTeam extends DefaultTemplate {
   FloatingActionButton? floatingActionButton(BuildContext context) {
     return FloatingActionButton.extended(
       onPressed: () {
-        _addProject(context);
+        if (isEdit) {
+          _httpModifyTeam(context);
+        } else {
+          _postAddTeam(context);
+        }
       },
       label: Text(
         isEdit ? 'Edit' : 'Create',
@@ -329,7 +409,7 @@ class AddOrEditTeam extends DefaultTemplate {
         Icons.edit,
         color: CustomColors.white,
       ),
-      backgroundColor: CustomColors.deepPurple,
+      backgroundColor: CustomColors.purple,
     );
   }
 

@@ -15,6 +15,8 @@ class Comm_Params {
   static const URL_HOME = _base + 'homeview' + '/$USER_ID';
   // 프로젝트 추가 {POST}
   static const URL_PROJECT_ADD = _base + 'createproject';
+  // 프로젝트 수정
+  static const URL_MODIFY_RPOJECT = _base + 'modifyproject/$PROJECT_ID';
   // 전체 할 일 {GET}
   static const _allTask = _base + 'alltask/';
   static const URL_RPOJECT_ALL = _allTask + PROJECT_ID;
@@ -52,6 +54,13 @@ class Comm_Params {
 
   static const _team = _base + 'team/';
   static const _team_home = _team + 'home/';
+
+  // 팀 생성
+  static const URL_TEAM_INSERT = _team + 'insert';
+  // 팀 수정
+  static const URL_TEAM_MODIFY = _team + 'modify';
+  // 팀 수정 정보 조회
+  static const URL_TEAM_MODIFY_INFO = _team + 'getTeamModifyInfo/$TEAM_ID';
   // 팀 조회 {GET}
   static const URL_TEAM = _team_home + USER_ID;
   // 팀 조회

@@ -113,17 +113,17 @@ class _RightMenuState extends State<RightMenu> {
                       ),
                       InkWell(
                         onTap: () {
-                          if (widget.isMobile) Navigator.pop(context);
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return ProfileDialog(
-                                width: size.width * 0.5,
-                                height: size.height * 0.5,
-                                isDesktop: isDesktop,
-                              );
-                            },
-                          );
+                          // if (widget.isMobile) Navigator.pop(context);
+                          // showDialog(
+                          //   context: context,
+                          //   builder: (context) {
+                          //     return ProfileDialog(
+                          //       width: size.width * 0.5,
+                          //       height: size.height * 0.5,
+                          //       isDesktop: isDesktop,
+                          //     );
+                          //   },
+                          // );
                         },
                         child: Row(
                           mainAxisSize: MainAxisSize.max,

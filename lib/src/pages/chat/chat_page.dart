@@ -24,7 +24,9 @@ class ChatPage extends DefaultTemplate {
   final socketUrl = 'ws://mmgg.kr/chat';
 
   sendMessage({required String msg}) {
-    stompClient!.send(destination: '/app/$chatRoomId/$uid', body: msg);
+    String token = 'Bearer ${ScpHttpClient.TOKEN}';
+    var headers = {'Authorization': token};
+    stompClient!.send(destination: '/app/$chatRoomId/$uid',headers:headers, body: msg);
   }
 
   /// Get Chat comment
@@ -69,12 +71,15 @@ class ChatPage extends DefaultTemplate {
   }
 
   connectStomp(BuildContext context) async {
+    String token = 'Bearer ${ScpHttpClient.TOKEN}';
+    var headers = {'Authorization': token};
     if (stompClient == null) {
       stompClient = StompClient(
           config: StompConfig(
-            url: socketUrl,
+            url: socketUrl,stompConnectHeaders: headers,
             onConnect: (frame) {
               stompClient!.subscribe(
+                headers: headers,
                 destination: '/topic/$chatRoomId',
                 callback: (StompFrame frame) {
                   print(frame.body);

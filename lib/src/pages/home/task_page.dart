@@ -422,6 +422,8 @@ class TaskPage extends DefaultTemplate {
                   Visibility(
                     visible: comment.commentuserId != null ? comment.commentuserId! == int.parse(uid) : false,
                     child: PopupMenuButton(
+                      padding: const EdgeInsets.all(0),
+                      iconSize: 30,
                       icon: const Icon(Icons.more_horiz,color: CustomColors.white,),
                       itemBuilder: (context){
                         return const [

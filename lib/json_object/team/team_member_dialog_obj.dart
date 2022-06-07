@@ -1,4 +1,4 @@
-enum MEMBER_PERMISSION { P_LEADER, P_MEMBER }
+enum MEMBER_PERMISSION { LEADER, MEMBER }
 
 class TeamMemberDialogObject {
   final String userName;

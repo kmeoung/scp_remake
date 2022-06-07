@@ -245,19 +245,22 @@ class ScpHttpClient {
     );
 
     String token = 'Bearer $TOKEN';
+
     if (headers != null) headers['Authorization'] = token;
     headers ??= {'Content-Type': 'application/json', 'Authorization': token};
-    var response = await http.put(url, headers: headers, body: body);
+    String? jsonBody;
+    if (body != null) jsonBody = json.encode(body);
+    var response = await http.put(url, headers: headers, body: jsonBody);
+    print(response.body);
     if (response.statusCode >= 200 && response.statusCode < 300) {
       Map<String, dynamic> json = convert.jsonDecode(response.body);
       int status = json['status'];
       String msg = json['message'];
       if (status >= 200 && status < 300) {
-        Map<String, dynamic> result = json['result'];
-        onSuccess(result, msg);
+        onSuccess(json, msg);
       } else {
         Fluttertoast.showToast(
-            msg:msg,
+            msg: msg,
             toastLength: Toast.LENGTH_LONG,
             gravity: ToastGravity.CENTER,
             timeInSecForIosWeb: 2,

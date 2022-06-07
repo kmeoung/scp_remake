@@ -8,6 +8,7 @@ import 'package:refactory_scp/provider/team_controller.dart';
 import 'package:refactory_scp/src/common/colors.dart';
 import 'package:refactory_scp/src/common/comm_param.dart';
 import 'package:refactory_scp/src/components/content_title.dart';
+import 'package:refactory_scp/src/components/dialog/show_team_dialog.dart';
 import 'package:refactory_scp/src/pages/add_pages/add_or_edit_team.dart';
 import 'package:refactory_scp/src/pages/template/default_template.dart';
 
@@ -96,6 +97,7 @@ class TeamPage extends DefaultTemplate {
 
   Widget _homeItemView(
       BuildContext context, List<TeamObject> teams, bool isMine) {
+    Size size = MediaQuery.of(context).size;
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -107,7 +109,20 @@ class TeamPage extends DefaultTemplate {
         mainAxisSpacing: 5,
       ),
       itemBuilder: (context, index) {
-        return _teamCard(context, teams[index], isMine);
+        return InkWell(onTap: () {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return ShowTeamDialog(
+                width: size.width * 0.7,
+                height: size.height * 0.5,
+                tName: teams[index].teamName,
+                tid: teams[index].teamId,
+                uid: uid,
+              );
+            },
+          );
+        },child: _teamCard(context, teams[index], isMine));
       },
     );
   }
@@ -145,27 +160,30 @@ class TeamPage extends DefaultTemplate {
                     ),
                   ),
                   Visibility(
-                    visible: isMine,
-                    child: IconButton(
-                      splashRadius: 20,
-                      iconSize: 30,
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => AddOrEditTeam(
-                              uid: uid,
-                              tid: '${team.teamId}',
-                            ),
-                          ),
-                        );
-                      },
-                      padding: EdgeInsets.zero,
-                      icon: const Icon(
-                        Icons.more_horiz,
-                        color: CustomColors.white,
-                      ),
-                    ),
+                      visible: isMine,
+                      child: PopupMenuButton(
+                        iconSize: 30,
+                        padding: const EdgeInsets.all(0),
+                        icon: const Icon(Icons.more_horiz,color: CustomColors.white,size: 30,),
+                        itemBuilder: (context){
+                          return const [
+                            PopupMenuItem(child: Text('수정'),value: 1,),
+                          ];
+                        },
+                        onSelected: (i){
+                          if(i == 1){
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => AddOrEditTeam(
+                                  uid: uid,
+                                  tid: '${team.teamId}',
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                      )
                   ),
                 ],
               ),
@@ -232,7 +250,7 @@ class TeamPage extends DefaultTemplate {
         Icons.add,
         color: CustomColors.white,
       ),
-      backgroundColor: CustomColors.deepPurple,
+      backgroundColor: CustomColors.purple,
     );
   }
 
