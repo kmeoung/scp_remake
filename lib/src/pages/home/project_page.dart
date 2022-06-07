@@ -327,7 +327,7 @@ class ProjectPage extends DefaultTemplate {
   Widget _allMyContentView(BuildContext context, String title) {
     Size size = MediaQuery.of(context).size;
     List<TaskDetailObject> tasks = context.watch<ProjectController>().tasks;
-    var completeTask = tasks.where((task) => task.taskComplete == 1).toList();
+    var completeTask = tasks.where((task) => task.taskComplete != 1).toList();
 
     return ConstrainedBox(
       constraints: BoxConstraints(minHeight: size.height * 0.7),

@@ -10,7 +10,7 @@ import 'package:refactory_scp/src/pages/home/home_page.dart';
 import 'package:refactory_scp/src/pages/home/project_page.dart';
 
 import 'package:refactory_scp/src/pages/team/team_page.dart';
-import 'package:refactory_scp/src/pages/team/team_room_page.dart';
+import 'package:refactory_scp/src/pages/chat/chat_room_page.dart';
 
 
 /// Desktop -> 오른쪽 메뉴
@@ -185,7 +185,7 @@ class _RightMenuState extends State<RightMenu> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => TeamRoomPage(
+                            builder: (_) => ChatRoomPage(
                               uid: widget._userId,
                             ),
                           ),

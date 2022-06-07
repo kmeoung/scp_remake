@@ -11,10 +11,10 @@ import 'package:refactory_scp/src/pages/add_pages/add_or_edit_project.dart';
 import 'package:refactory_scp/src/pages/chat/chat_page.dart';
 import 'package:refactory_scp/src/pages/template/default_template.dart';
 
-class TeamRoomPage extends DefaultTemplate {
+class ChatRoomPage extends DefaultTemplate {
   final String uid;
 
-  TeamRoomPage({
+  ChatRoomPage({
     required this.uid,
     Key? key,
   }) : super(uid, key: key);
@@ -67,7 +67,7 @@ class TeamRoomPage extends DefaultTemplate {
                   children: [
                     ContentTitle(
                       title: 'Chat Room',
-                      onTapMore: () {},
+                      onTapMore: null,
                     ),
                     _contentView(context, 'Chat Room'),
                   ],
@@ -179,19 +179,7 @@ class TeamRoomPage extends DefaultTemplate {
 
   @override
   FloatingActionButton? floatingActionButton(BuildContext context) {
-    return FloatingActionButton(
-      onPressed: () {
-        // Navigator.push(
-        //     context,
-        //     MaterialPageRoute(
-        //         builder: (_) => AddOrEditTask(uid: uid, pid: pid)));
-      },
-      child: const Icon(
-        Icons.add,
-        color: CustomColors.white,
-      ),
-      backgroundColor: CustomColors.deepPurple,
-    );
+    return null;
   }
 
   @override

@@ -123,7 +123,7 @@ class HomePage extends DefaultTemplate {
     int taskSize = project.tasklist.length;
     int successTasks = project.tasklist.where((element) {
       var taskObject = TaskObject.fromJson(element);
-      return taskObject.taskComplete == 1;
+      return taskObject.taskComplete != 1;
     }).length;
     return InkWell(
       onTap: () {

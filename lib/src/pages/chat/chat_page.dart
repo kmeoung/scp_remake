@@ -117,7 +117,7 @@ class ChatPage extends DefaultTemplate {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          ContentTitle(title: 'Chat', onTapMore: () {}),
+                          ContentTitle(title: 'Chat', onTapMore: null),
                           const SizedBox(
                             height: 30,
                           ),
