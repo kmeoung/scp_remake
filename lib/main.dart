@@ -52,76 +52,123 @@ class _LoadingPageState extends State<LoadingPage> {
     Timer(const Duration(milliseconds: 1000), () {
       String uid = '';
       String token = '';
-      // String? cookies = html.window.document.cookie;
-      //
-      // List<String> arrCookie = cookies!.split(';');
-      //
-      // Fluttertoast.showToast(
-      //     msg: '1 ${arrCookie}',
-      //     toastLength: Toast.LENGTH_LONG,
-      //     gravity: ToastGravity.CENTER,
-      //     timeInSecForIosWeb: 1,
-      //     backgroundColor: Colors.black,
-      //     textColor: Colors.white,
-      //     fontSize: 16.0);
-      //
+      String? cookies = html.window.document.cookie;
 
-      //
-      // for(String cookie in arrCookie){
-      //   List<String> keyValue = cookie.split("=");
-      //   String key = keyValue[0];
-      //   String value = keyValue[1];
-      //
-      //   Fluttertoast.showToast(
-      //       msg: '2 ${keyValue[0]}',
-      //       toastLength: Toast.LENGTH_LONG,
-      //       gravity: ToastGravity.CENTER,
-      //       timeInSecForIosWeb: 1,
-      //       backgroundColor: Colors.black,
-      //       textColor: Colors.white,
-      //       fontSize: 16.0);
-      //
-      //   if(key.contains('uid')){
-      //     Fluttertoast.showToast(
-      //         msg: '3 ${keyValue[1]}',
-      //         toastLength: Toast.LENGTH_LONG,
-      //         gravity: ToastGravity.CENTER,
-      //         timeInSecForIosWeb: 1,
-      //         backgroundColor: Colors.black,
-      //         textColor: Colors.white,
-      //         fontSize: 16.0);
-      //     uid = value;
-      //   }else if(key.contains('JSESSIONID')){
-      //     Fluttertoast.showToast(
-      //         msg: '3 ${keyValue[1]}',
-      //         toastLength: Toast.LENGTH_LONG,
-      //         gravity: ToastGravity.CENTER,
-      //         timeInSecForIosWeb: 1,
-      //         backgroundColor: Colors.black,
-      //         textColor: Colors.white,
-      //         fontSize: 16.0);
-      //     token = value;
-      //   }
-      // }
-      //
-      // Fluttertoast.showToast(
-      //     msg:'4 uid : $uid \ntoken : $token',
-      //     toastLength: Toast.LENGTH_LONG,
-      //     gravity: ToastGravity.CENTER,
-      //     timeInSecForIosWeb: 1,
-      //     backgroundColor: Colors.black,
-      //     textColor: Colors.white,
-      //     fontSize: 16.0);
+      Fluttertoast.showToast(
+          msg: 'Origin Cookies\n{$cookies}',
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.CENTER,
+          timeInSecForIosWeb: 10,
+          webBgColor: 'red',
+          webPosition: 'left',
+          backgroundColor: Colors.black,
+          textColor: Colors.white,
+          fontSize: 16.0);
 
-      token = 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxMyIsImlhdCI6MTY1NDU0NTg3MywiZXhwIjoxNjU1NDA5ODczfQ.ZME_gQs2jN5Z4xlScjj4EVs3fxBXFjoS25GERTBRDtWtwmLH--7iIzK0SVDab5hbYMINdxwT8AbYq9FtstDsdw';
-      uid = '1';
+      List<String> arrCookie = cookies!.split(';');
+
+      Fluttertoast.showToast(
+          msg: 'cookie List\n{${arrCookie}}',
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.CENTER,
+          timeInSecForIosWeb: 10,
+          webBgColor: 'red',
+          webPosition: 'left',
+          backgroundColor: Colors.black,
+          textColor: Colors.white,
+          fontSize: 16.0);
+
+
+
+      for(String cookie in arrCookie){
+        List<String> keyValue = cookie.split("=");
+        String key = keyValue[0];
+        String value = keyValue[1];
+
+        Fluttertoast.showToast(
+            msg: 'cookie\n${keyValue.toString()}\n{$key : $value}',
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.CENTER,
+            timeInSecForIosWeb: 10,
+            webBgColor: '#000000',
+            webPosition: 'left',
+            backgroundColor: Colors.black,
+            textColor: Colors.white,
+            fontSize: 16.0);
+
+        if(key.contains('uid')){
+          Fluttertoast.showToast(
+              msg: 'cookie uid\n{$key : $value}',
+              toastLength: Toast.LENGTH_LONG,
+              gravity: ToastGravity.CENTER,
+              timeInSecForIosWeb: 10,
+              webBgColor: '#000000',
+              webPosition: 'left',
+              backgroundColor: Colors.black,
+              textColor: Colors.white,
+              fontSize: 16.0);
+          uid = value;
+        }else if(key.contains('JSESSIONID')){
+          Fluttertoast.showToast(
+              msg: 'cookie JESSIONID\n{$key : $value}',
+              toastLength: Toast.LENGTH_LONG,
+              gravity: ToastGravity.CENTER,
+              timeInSecForIosWeb: 10,
+              webBgColor: '#000000',
+              webPosition: 'left',
+              backgroundColor: Colors.black,
+              textColor: Colors.white,
+              fontSize: 16.0);
+          token = value;
+        }else if(key.contains('SCP')){
+          Fluttertoast.showToast(
+              msg: 'cookie SCP\n{$key : $value}',
+              toastLength: Toast.LENGTH_LONG,
+              gravity: ToastGravity.CENTER,
+              timeInSecForIosWeb: 10,
+              webBgColor: '#000000',
+              webPosition: 'left',
+              backgroundColor: Colors.black,
+              textColor: Colors.white,
+              fontSize: 16.0);
+          token = value;
+        }
+      }
+
+      Fluttertoast.showToast(
+          msg:'cookie save uid\n{$uid}',
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.CENTER,
+          timeInSecForIosWeb: 10,
+          webBgColor: '#000000',
+          webPosition: 'left',
+          backgroundColor: Colors.black,
+          textColor: Colors.white,
+          fontSize: 16.0);
+
+      Fluttertoast.showToast(
+          msg:'cookie save token\n{$token}',
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.CENTER,
+          timeInSecForIosWeb: 10,
+          webBgColor: '#000000',
+          webPosition: 'left',
+          backgroundColor: Colors.black,
+          textColor: Colors.white,
+          fontSize: 16.0);
+
+      // token = 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxMyIsImlhdCI6MTY1NDU0NTg3MywiZXhwIjoxNjU1NDA5ODczfQ.ZME_gQs2jN5Z4xlScjj4EVs3fxBXFjoS25GERTBRDtWtwmLH--7iIzK0SVDab5hbYMINdxwT8AbYq9FtstDsdw';
+      // uid = '1';
 
       ScpHttpClient.TOKEN = token;
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => HomePage(uid: uid),
-          ));
+
+      if(token.isNotEmpty) {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HomePage(uid: uid),
+            ));
+      }
     });
   }
 
