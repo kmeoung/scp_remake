@@ -4,7 +4,7 @@ class CommentObject {
   final String commentNickname;
   final String commentTime;
   final String commentContent;
-  final int commentuserId;
+  final int? commentuserId;
 
   factory CommentObject.fromJson(Map<String, dynamic> json) {
     return CommentObject(

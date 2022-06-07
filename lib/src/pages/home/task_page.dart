@@ -1,15 +1,11 @@
-import 'dart:js';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/src/provider.dart';
-import 'package:refactory_scp/http/file_http_client.dart';
 import 'package:refactory_scp/http/scp_http_client.dart';
 import 'package:refactory_scp/json_object/comment_obj.dart';
-import 'package:refactory_scp/json_object/task_and_comment_obj.dart';
+import 'package:refactory_scp/json_object/task/task_and_comment_obj.dart';
 import 'package:refactory_scp/provider/task_controller.dart';
 import 'package:refactory_scp/src/common/colors.dart';
 import 'package:refactory_scp/src/common/comm_param.dart';
@@ -107,6 +103,70 @@ class TaskPage extends DefaultTemplate {
     }
   }
 
+  /// Comment edit
+  _patchCommentEdit(BuildContext context, String comment) async {
+    var url = Comm_Params.URL_COMMENT_EDIT.replaceAll(Comm_Params.COMMENDID, editCommentId.toString());
+    if (context.read<TaskController>().task != null) {
+      var task = context.read<TaskController>().task!;
+      Map<String, dynamic> body = {
+        "commentId": task.taskId,
+        "commentContent": comment,
+      };
+      await ScpHttpClient.patch(
+        url,
+        body: body,
+        onSuccess: (json, message) {
+          commentController.clear();
+          editCommentId = -1;
+          _getTaskDetail(context);
+        },
+        onFailed: (message) {
+          context.read<TaskController>().clear();
+          ScaffoldMessenger.of(context).showSnackBar(
+            //SnackBar 구현하는법 context는 위에 BuildContext에 있는 객체를 그대로 가져오면 됨.
+              SnackBar(
+                content: Text(message), //snack bar의 내용. icon, button같은것도 가능하다.
+                duration: const Duration(seconds: 5), //올라와있는 시간
+                action: SnackBarAction(
+                  //추가로 작업을 넣기. 버튼넣기라 생각하면 편하다.
+                  label: 'close', //버튼이름
+                  onPressed: () {}, //버튼 눌렀을때.
+                ),
+              ));
+        },
+      );
+    }
+  }
+
+  /// Comment delete
+  _deleteComment(BuildContext context,int commentId) async {
+    var url = Comm_Params.URL_COMMENT_DELETE.replaceAll(Comm_Params.COMMENDID, commentId.toString());
+    if (context.read<TaskController>().task != null) {
+      await ScpHttpClient.delete(
+        url,
+        body: null,
+        onSuccess: (json, message) {
+          commentController.clear();
+          _getTaskDetail(context);
+        },
+        onFailed: (message) {
+          context.read<TaskController>().clear();
+          ScaffoldMessenger.of(context).showSnackBar(
+            //SnackBar 구현하는법 context는 위에 BuildContext에 있는 객체를 그대로 가져오면 됨.
+              SnackBar(
+                content: Text(message), //snack bar의 내용. icon, button같은것도 가능하다.
+                duration: const Duration(seconds: 5), //올라와있는 시간
+                action: SnackBarAction(
+                  //추가로 작업을 넣기. 버튼넣기라 생각하면 편하다.
+                  label: 'close', //버튼이름
+                  onPressed: () {}, //버튼 눌렀을때.
+                ),
+              ));
+        },
+      );
+    }
+  }
+
   Widget customDetail(ScrollController controller, BuildContext context) {
     return ChangeNotifierProvider<TaskController>(
       create: (_) => TaskController(),
@@ -126,13 +186,7 @@ class TaskPage extends DefaultTemplate {
                         children: [
                           ContentTitle(
                             title: projectName,
-                            onTapMore: () {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) => AddOrEditTask(
-                                          uid: uid, pid: pid, tid: tid)));
-                            },
+                            onTapMore: null,
                           ),
                           _headerTaskPerson(context),
                           const SizedBox(
@@ -164,6 +218,7 @@ class TaskPage extends DefaultTemplate {
       },
     );
   }
+
   updateTaskSuccessed(BuildContext context) {
     var url = Comm_Params.URL_PROJECT_WETHER
         .replaceAll(Comm_Params.USER_ID, uid)
@@ -321,6 +376,8 @@ class TaskPage extends DefaultTemplate {
     );
   }
 
+  int editCommentId = -1;
+
   /// Comment View
   Widget _commentView(CommentObject comment, BuildContext context) {
     return Card(
@@ -353,12 +410,34 @@ class TaskPage extends DefaultTemplate {
                     ),
                   ),
                   Text(
-                    comment.commentTime,
+                    DateFormat('yyyy-MM-dd\nHH:mm:ss')
+                        .format(DateTime.parse(comment.commentTime)),
                     textAlign: TextAlign.end,
                     style: const TextStyle(
                       fontWeight: FontWeight.normal,
                       color: CustomColors.white,
                     ),
+                  ),
+
+                  Visibility(
+                    visible: comment.commentuserId != null ? comment.commentuserId! == int.parse(uid) : false,
+                    child: PopupMenuButton(
+                      icon: const Icon(Icons.more_horiz,color: CustomColors.white,),
+                      itemBuilder: (context){
+                        return const [
+                          PopupMenuItem(child: Text('수정'),value: 1,),
+                          PopupMenuItem(child: Text('삭제'),value: 2,),
+                        ];
+                      },
+                      onSelected: (i){
+                        if(i == 1){
+                          editCommentId = comment.commentId;
+                          commentController.value = TextEditingValue(text: comment.commentContent);
+                        }else if(i == 2){
+                          _deleteComment(context,comment.commentId);
+                        }
+                      },
+                    )
                   ),
                 ],
               ),
@@ -380,6 +459,7 @@ class TaskPage extends DefaultTemplate {
       ),
     );
   }
+
 
   TextEditingController commentController = TextEditingController();
 
@@ -413,7 +493,11 @@ class TaskPage extends DefaultTemplate {
               ),
               onPressed: () {
                 if (commentController.text.isNotEmpty) {
-                  _postCommentAdd(context, commentController.text);
+                  if(editCommentId > -1){
+                   _patchCommentEdit(context, commentController.text);
+                  }else {
+                    _postCommentAdd(context, commentController.text);
+                  }
                 }
               },
             ),

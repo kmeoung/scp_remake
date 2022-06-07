@@ -46,9 +46,10 @@ class LoadingPage extends StatefulWidget {
 }
 
 class _LoadingPageState extends State<LoadingPage> {
+
   @override
   void initState() {
-    Timer(Duration(milliseconds: 1000), () {
+    Timer(const Duration(milliseconds: 1000), () {
       String uid = '';
       String token = '';
       // String? cookies = html.window.document.cookie;
@@ -113,7 +114,7 @@ class _LoadingPageState extends State<LoadingPage> {
       //     fontSize: 16.0);
 
       token = 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxMyIsImlhdCI6MTY1NDU0NTg3MywiZXhwIjoxNjU1NDA5ODczfQ.ZME_gQs2jN5Z4xlScjj4EVs3fxBXFjoS25GERTBRDtWtwmLH--7iIzK0SVDab5hbYMINdxwT8AbYq9FtstDsdw';
-      uid = '13';
+      uid = '1';
 
       ScpHttpClient.TOKEN = token;
       Navigator.push(

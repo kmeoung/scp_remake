@@ -7,8 +7,7 @@ import 'package:refactory_scp/json_object/search_user_obj.dart';
 import 'package:refactory_scp/provider/team_search_controller.dart';
 import 'package:refactory_scp/src/common/colors.dart';
 import 'package:refactory_scp/src/common/comm_param.dart';
-
-import 'content_title.dart';
+import 'package:refactory_scp/src/components/content_title.dart';
 
 /// 팀원 추가 Dialog
 class AddTeamMemberDialog extends StatelessWidget {
@@ -50,16 +49,16 @@ class AddTeamMemberDialog extends StatelessWidget {
       },
       onFailed: (message) {
         ScaffoldMessenger.of(context).showSnackBar(
-            //SnackBar 구현하는법 context는 위에 BuildContext에 있는 객체를 그대로 가져오면 됨.
+          //SnackBar 구현하는법 context는 위에 BuildContext에 있는 객체를 그대로 가져오면 됨.
             SnackBar(
-          content: Text(message), //snack bar의 내용. icon, button같은것도 가능하다.
-          duration: Duration(seconds: 5), //올라와있는 시간
-          action: SnackBarAction(
-            //추가로 작업을 넣기. 버튼넣기라 생각하면 편하다.
-            label: 'close', //버튼이름
-            onPressed: () {}, //버튼 눌렀을때.
-          ),
-        ));
+              content: Text(message), //snack bar의 내용. icon, button같은것도 가능하다.
+              duration: Duration(seconds: 5), //올라와있는 시간
+              action: SnackBarAction(
+                //추가로 작업을 넣기. 버튼넣기라 생각하면 편하다.
+                label: 'close', //버튼이름
+                onPressed: () {}, //버튼 눌렀을때.
+              ),
+            ));
       },
     );
   }
@@ -90,10 +89,10 @@ class AddTeamMemberDialog extends StatelessWidget {
 
                   if (keyword.isNotEmpty) {
                     _searchTimer = Timer(const Duration(milliseconds: 500),
-                        () => _getTeamMember(context, keyword: keyword));
+                            () => _getTeamMember(context, keyword: keyword));
                   } else {
                     _searchTimer = Timer(const Duration(milliseconds: 500),
-                        () => context.read<TeamSearchController>().clear());
+                            () => context.read<TeamSearchController>().clear());
                   }
                 },
                 decoration: InputDecoration(
@@ -114,7 +113,7 @@ class AddTeamMemberDialog extends StatelessWidget {
             child: ListView(
               children: List.generate(
                 users.length,
-                (index) => ListTile(
+                    (index) => ListTile(
                   onTap: () {
                     Navigator.pop(context, users[index]);
                   },

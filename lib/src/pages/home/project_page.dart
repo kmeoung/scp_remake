@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:refactory_scp/http/scp_http_client.dart';
 import 'package:refactory_scp/json_object/home/home_project_obj.dart';
-import 'package:refactory_scp/json_object/task_detail_obj.dart';
+import 'package:refactory_scp/json_object/task/task_detail_obj.dart';
 import 'package:refactory_scp/provider/project_controller.dart';
 import 'package:refactory_scp/src/common/colors.dart';
 import 'package:refactory_scp/src/common/comm_param.dart';

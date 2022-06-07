@@ -2,17 +2,18 @@ import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 import 'package:refactory_scp/http/scp_http_client.dart';
 import 'package:refactory_scp/json_object/home/home_project_obj.dart';
 import 'package:refactory_scp/json_object/search_user_obj.dart';
-import 'package:refactory_scp/json_object/team_member_dialog_obj.dart';
+import 'package:refactory_scp/json_object/team/team_member_dialog_obj.dart';
 import 'package:refactory_scp/provider/team_member_controller.dart';
 import 'package:refactory_scp/src/common/colors.dart';
 import 'package:refactory_scp/src/common/comm_param.dart';
-import 'package:refactory_scp/src/components/add_team_dialog.dart';
-import 'package:refactory_scp/src/components/add_team_member_dialog.dart';
+import 'package:refactory_scp/src/components/dialog/add_team_dialog.dart';
 import 'package:refactory_scp/src/components/content_title.dart';
+import 'package:refactory_scp/src/components/dialog/add_team_member_dialog.dart';
 import 'package:refactory_scp/src/pages/home/home_page.dart';
 import 'package:refactory_scp/src/pages/template/default_template.dart';
 
@@ -176,16 +177,24 @@ class AddOrEditProject extends DefaultTemplate {
       color: Colors.white,
       child: InkWell(
         borderRadius: BorderRadius.circular(10.0),
-        onTap: () {
-          showDialog(
+        onTap: () async {
+          List<SearchUserObject> result = await showDialog(
             context: context,
             builder: (BuildContext context) {
               return AddTeamDialog(
+                uid: uid,
                 width: size.width * 0.7,
                 height: size.height * 0.5,
               );
             },
           );
+
+          for (SearchUserObject suo in result) {
+            var member = TeamMemberDialogObject(suo.userNickname, suo.userId,
+                int.parse(uid), MEMBER_PERMISSION.P_MEMBER);
+            _mMember.add(member);
+            context.read<TeamMemberController>().addMember(member);
+          }
         },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 17),
@@ -239,8 +248,6 @@ class AddOrEditProject extends DefaultTemplate {
 
   Widget _member(
       TeamMemberDialogObject member, int index, BuildContext context) {
-    List<String> _permissions = ['생성자', '멤버'];
-
     return Row(
       mainAxisSize: MainAxisSize.max,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -271,12 +278,17 @@ class AddOrEditProject extends DefaultTemplate {
                           color: CustomColors.white, fontSize: 12),
                     ),
                   ),
-                  IconButton(
-                    splashRadius: 20,
-                    onPressed: () {},
-                    icon: const Icon(
-                      Icons.close,
-                      color: CustomColors.white,
+                  Visibility(
+                    visible: member.projectinuserCommoncode != MEMBER_PERMISSION.P_LEADER,
+                    child: IconButton(
+                      splashRadius: 20,
+                      onPressed: () {
+                        context.read<TeamMemberController>().removeMember(member);
+                      },
+                      icon: const Icon(
+                        Icons.close,
+                        color: CustomColors.white,
+                      ),
                     ),
                   ),
                 ],
@@ -294,36 +306,15 @@ class AddOrEditProject extends DefaultTemplate {
             color: Colors.white,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20),
+              alignment: Alignment.centerLeft,
+              height: 50,
               width: double.infinity,
-              child: DropdownButton(
-                dropdownColor: CustomColors.white,
-                borderRadius: BorderRadius.circular(10.0),
-                isExpanded: true,
-                value: _permissions[
-                    member.projectinuserCommoncode == MEMBER_PERMISSION.P_LEADER
-                        ? 0
-                        : 1],
-                elevation: 0,
+              child: Text(
+                member.projectinuserCommoncode == MEMBER_PERMISSION.P_LEADER
+                    ? '생성자'
+                    : '멤버',
                 style: const TextStyle(
                     color: CustomColors.deepPurple, fontSize: 12),
-                icon: const Icon(
-                  Icons.arrow_drop_down_rounded,
-                  color: CustomColors.deepPurple,
-                ),
-                underline: Container(),
-                onChanged: (String? value) {
-                  context.read<TeamMemberController>().changeMemberPermission(
-                      index,
-                      '생성자' == value
-                          ? MEMBER_PERMISSION.P_LEADER
-                          : MEMBER_PERMISSION.P_MEMBER);
-                },
-                alignment: Alignment.centerRight,
-                items: _permissions
-                    .map<DropdownMenuItem<String>>((String value) =>
-                        DropdownMenuItem<String>(
-                            value: value, child: SizedBox(child: Text(value))))
-                    .toList(),
               ),
             ),
           ),

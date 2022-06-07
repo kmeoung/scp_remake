@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:refactory_scp/http/scp_http_client.dart';
-import 'package:refactory_scp/json_object/chat_room_obj.dart';
-import 'package:refactory_scp/provider/chat_room_controller.dart';
+import 'package:refactory_scp/json_object/chat/chat_room_obj.dart';
+import 'package:refactory_scp/provider/chat/chat_room_controller.dart';
 import 'package:refactory_scp/provider/project_controller.dart';
 import 'package:refactory_scp/src/common/colors.dart';
 import 'package:refactory_scp/src/common/comm_param.dart';

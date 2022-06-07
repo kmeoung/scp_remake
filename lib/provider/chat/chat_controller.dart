@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:refactory_scp/json_object/chat_obj.dart';
+import 'package:refactory_scp/json_object/chat/chat_obj.dart';
 
 class ChatController extends ChangeNotifier {
   List<ChatObject> chats = [];

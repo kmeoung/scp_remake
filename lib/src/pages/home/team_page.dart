@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/src/provider.dart';
 import 'package:refactory_scp/http/scp_http_client.dart';
-import 'package:refactory_scp/json_object/team_member_obj.dart';
-import 'package:refactory_scp/json_object/team_obj.dart';
+import 'package:refactory_scp/json_object/team/team_member_obj.dart';
+import 'package:refactory_scp/json_object/team/team_obj.dart';
 import 'package:refactory_scp/provider/team_controller.dart';
 import 'package:refactory_scp/src/common/colors.dart';
 import 'package:refactory_scp/src/common/comm_param.dart';
 import 'package:refactory_scp/src/components/content_title.dart';
+import 'package:refactory_scp/src/pages/add_pages/add_or_edit_team.dart';
 import 'package:refactory_scp/src/pages/template/default_template.dart';
-import 'package:refactory_scp/src/pages/home/add_or_edit_team.dart';
 
 class TeamPage extends DefaultTemplate {
   final String uid;

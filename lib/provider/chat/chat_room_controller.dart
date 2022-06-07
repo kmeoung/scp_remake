@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:refactory_scp/json_object/chat_room_obj.dart';
+import 'package:refactory_scp/json_object/chat/chat_room_obj.dart';
 
 class ChatRoomController extends ChangeNotifier {
   List<ChatRoomObject> _list = [];

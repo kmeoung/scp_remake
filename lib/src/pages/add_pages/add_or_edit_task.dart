@@ -1,17 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/src/provider.dart';
-import 'package:refactory_scp/http/file_http_client.dart';
 import 'package:refactory_scp/http/scp_http_client.dart';
 import 'package:refactory_scp/json_object/search_project_member_obj.dart';
 import 'package:refactory_scp/provider/add_task_controller.dart';
 import 'package:refactory_scp/src/common/colors.dart';
 import 'package:refactory_scp/src/common/comm_param.dart';
 import 'package:refactory_scp/src/components/content_title.dart';
-import 'package:refactory_scp/src/components/search_team_member_dialog.dart';
+import 'package:refactory_scp/src/components/dialog/search_team_member_dialog.dart';
 import 'package:refactory_scp/src/pages/template/default_template.dart';
 
 class AddOrEditTask extends DefaultTemplate {
@@ -49,36 +47,6 @@ class AddOrEditTask extends DefaultTemplate {
                   ),
                   _addTeamMember(context, 'Select Team Member'),
                   const SizedBox(
-                    height: 20,
-                  ),
-                  ElevatedButton(
-                      onPressed: () {
-                        _selectFiles(context);
-                      },
-                      child: const Text(
-                        'Add Files',
-                        style: TextStyle(color: CustomColors.white),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                          primary: CustomColors.green)),
-                  SingleChildScrollView(
-                    child: Row(
-                      children: List.generate(
-                          context.watch<AddTaskController>().filePath.length,
-                          (index) {
-                        var path =
-                            context.watch<AddTaskController>().filePath[index];
-                        return Row(children: [
-                          Text(path?? 'file$index',style:const TextStyle(color: Colors.black),),
-                          const SizedBox(width: 10,),
-                          IconButton(onPressed: () {
-                            context.read<AddTaskController>().removeFilePath(context.read<AddTaskController>().filePath[index]??'file$index');
-                          }, icon: const Icon(Icons.close,color: Colors.black,)),
-                        ],);
-                      }),
-                    ),
-                  ),
-                  const SizedBox(
                     height: 40,
                   ),
                   context.watch<AddTaskController>().getUser() != null
@@ -93,42 +61,6 @@ class AddOrEditTask extends DefaultTemplate {
             ),
           ),
         );
-      },
-    );
-  }
-
-  void _selectFiles(BuildContext context) async {
-    List<String?>? filePaths = await FileHttpClient.selectFiles();
-
-    if (filePaths != null) {
-      context.read<AddTaskController>().setFilePath(filePaths);
-    }
-  }
-
-  void _uploadFiles(List<String?> filePaths, int tid) {
-    FileHttpClient.uploadFiles(
-      pid: int.parse(pid),
-      tid: tid,
-      filePaths: filePaths,
-      onSuccess: (Map<String, dynamic> json, String message) {
-        Fluttertoast.showToast(
-            msg: 'upload successed',
-            toastLength: Toast.LENGTH_LONG,
-            gravity: ToastGravity.CENTER,
-            timeInSecForIosWeb: 1,
-            backgroundColor: Colors.black,
-            textColor: Colors.white,
-            fontSize: 16.0);
-      },
-      onFailed: (String message) {
-        Fluttertoast.showToast(
-            msg: message,
-            toastLength: Toast.LENGTH_LONG,
-            gravity: ToastGravity.CENTER,
-            timeInSecForIosWeb: 1,
-            backgroundColor: Colors.black,
-            textColor: Colors.white,
-            fontSize: 16.0);
       },
     );
   }
@@ -153,10 +85,7 @@ class AddOrEditTask extends DefaultTemplate {
       url,
       body: body,
       onSuccess: (json, message) {
-        if (context.read<AddTaskController>().filePath.isNotEmpty) {
-          int taskId = json["result"]["createdTask"]["taskId"];
-          _uploadFiles(context.read<AddTaskController>().filePath, taskId);
-        }
+        Navigator.pop(context);
       },
       onFailed: (message) => ScaffoldMessenger.of(context).showSnackBar(
           //SnackBar 구현하는법 context는 위에 BuildContext에 있는 객체를 그대로 가져오면 됨.
@@ -287,7 +216,6 @@ class AddOrEditTask extends DefaultTemplate {
   }
 
   Widget _member(BuildContext context, SearchProjectMemberObject user) {
-    List<String> _permissions = ['멤버'];
 
     return Row(
       mainAxisSize: MainAxisSize.max,
@@ -335,26 +263,10 @@ class AddOrEditTask extends DefaultTemplate {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               width: double.infinity,
-              child: DropdownButton(
-                dropdownColor: CustomColors.white,
-                borderRadius: BorderRadius.circular(10.0),
-                isExpanded: true,
-                value: _permissions[0],
-                elevation: 0,
-                style: const TextStyle(
+              child: const Text(
+                '담당자',
+                style: TextStyle(
                     color: CustomColors.deepPurple, fontSize: 12),
-                icon: const Icon(
-                  Icons.arrow_drop_down_rounded,
-                  color: CustomColors.deepPurple,
-                ),
-                underline: Container(),
-                onChanged: (String? value) {},
-                alignment: Alignment.centerRight,
-                items: _permissions
-                    .map<DropdownMenuItem<String>>((String value) =>
-                        DropdownMenuItem<String>(
-                            value: value, child: SizedBox(child: Text(value))))
-                    .toList(),
               ),
             ),
           ),

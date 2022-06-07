@@ -1,10 +1,12 @@
 class Comm_Params {
   static const USER_ID = ':userid';
+  static const TEAM_ID = ':teamid';
   static const PROJECT_ID = ':projectid';
   static const TASK_ID = ':taskid';
   static const PROJECT_IN_USER_ID = ':projectinuserId';
   static const EMAIL_KEYWORD = ':email_keyword';
   static const CHAT_ROOM_ID = ':chat_room_id';
+  static const COMMENDID = ':COMMENDID';
   // ??? 뭔지도 모름
   static const SELECTED = ':selected';
   static const _base = '/';
@@ -43,11 +45,19 @@ class Comm_Params {
   static const URL_TASK_DETAIL = _taskDetail + TASK_ID;
   // 댓글 작성 추가 {POST}
   static const URL_COMMENT_ADD = _base + 'commentwrite/';
+  // 댓글 수정
+  static const URL_COMMENT_EDIT = _base + 'commentmodify/$COMMENDID';
+  // 댓글 삭제
+  static const URL_COMMENT_DELETE = _base + 'commentdelete/$COMMENDID';
 
   static const _team = _base + 'team/';
   static const _team_home = _team + 'home/';
   // 팀 조회 {GET}
   static const URL_TEAM = _team_home + USER_ID;
+  // 팀 조회
+  static const URL_TEAM_LIST = _team + 'getUserTeamList/$USER_ID';
+  // 팀 원 조회
+  static const URL_TEAM_MEMBER_LIST = _team + 'getTeamMembers/$TEAM_ID';
   // 팀원 조회 {GET}
   static const URL_SEARCH_USER =
       _team + 'getUsersByEmail/' + USER_ID + '/' + EMAIL_KEYWORD;

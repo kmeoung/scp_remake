@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:refactory_scp/json_object/task_detail_obj.dart';
+import 'package:refactory_scp/json_object/task/task_detail_obj.dart';
 
 class ProjectController extends ChangeNotifier {
   List<TaskDetailObject> tasks = [];

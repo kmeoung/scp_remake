@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:refactory_scp/json_object/team_obj.dart';
+import 'package:refactory_scp/json_object/team/team_obj.dart';
 
 enum TEAM_TYPE { MY, ANOTHER, ALL }
 

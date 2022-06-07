@@ -1,16 +1,12 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:refactory_scp/http/scp_http_client.dart';
 import 'package:refactory_scp/json_object/search_project_member_obj.dart';
-import 'package:refactory_scp/json_object/search_user_obj.dart';
 import 'package:refactory_scp/provider/search_project_member_controller.dart';
-import 'package:refactory_scp/provider/team_search_controller.dart';
 import 'package:refactory_scp/src/common/colors.dart';
 import 'package:refactory_scp/src/common/comm_param.dart';
+import 'package:refactory_scp/src/components/content_title.dart';
 
-import 'content_title.dart';
 
 /// 팀원 추가 Dialog
 class SearchTeamMemberDialog extends StatelessWidget {
@@ -42,7 +38,7 @@ class SearchTeamMemberDialog extends StatelessWidget {
   /// Get Team Member
   _getTeamMember(BuildContext context) async {
     var url =
-        Comm_Params.URL_PROJECT_MEMBER.replaceAll(Comm_Params.PROJECT_ID, pid);
+    Comm_Params.URL_PROJECT_MEMBER.replaceAll(Comm_Params.PROJECT_ID, pid);
     await ScpHttpClient.get(
       url,
       onSuccess: (json, message) {
@@ -51,23 +47,23 @@ class SearchTeamMemberDialog extends StatelessWidget {
         if (users.isNotEmpty) {
           for (Map<String, dynamic> json in users) {
             SearchProjectMemberObject user =
-                SearchProjectMemberObject.fromJson(json);
+            SearchProjectMemberObject.fromJson(json);
             context.read<SearchProjectMemeberController>().add(user);
           }
         }
       },
       onFailed: (message) {
         ScaffoldMessenger.of(context).showSnackBar(
-            //SnackBar 구현하는법 context는 위에 BuildContext에 있는 객체를 그대로 가져오면 됨.
+          //SnackBar 구현하는법 context는 위에 BuildContext에 있는 객체를 그대로 가져오면 됨.
             SnackBar(
-          content: Text(message), //snack bar의 내용. icon, button같은것도 가능하다.
-          duration: Duration(seconds: 5), //올라와있는 시간
-          action: SnackBarAction(
-            //추가로 작업을 넣기. 버튼넣기라 생각하면 편하다.
-            label: 'close', //버튼이름
-            onPressed: () {}, //버튼 눌렀을때.
-          ),
-        ));
+              content: Text(message), //snack bar의 내용. icon, button같은것도 가능하다.
+              duration: Duration(seconds: 5), //올라와있는 시간
+              action: SnackBarAction(
+                //추가로 작업을 넣기. 버튼넣기라 생각하면 편하다.
+                label: 'close', //버튼이름
+                onPressed: () {}, //버튼 눌렀을때.
+              ),
+            ));
       },
     );
   }
@@ -75,7 +71,7 @@ class SearchTeamMemberDialog extends StatelessWidget {
   // Dialog Contents
   Widget _customDialogContents(BuildContext context) {
     List<SearchProjectMemberObject> users =
-        context.watch<SearchProjectMemeberController>().get();
+    context.watch<SearchProjectMemeberController>().get();
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
       child: Column(
@@ -86,7 +82,7 @@ class SearchTeamMemberDialog extends StatelessWidget {
             child: ListView(
               children: List.generate(
                 users.length,
-                (index) => ListTile(
+                    (index) => ListTile(
                   onTap: () {
                     Navigator.pop(context, users[index]);
                   },

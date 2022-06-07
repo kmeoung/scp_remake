@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:refactory_scp/http/scp_http_client.dart';
-import 'package:refactory_scp/json_object/chat_obj.dart';
-import 'package:refactory_scp/provider/chat_controller.dart';
+import 'package:refactory_scp/json_object/chat/chat_obj.dart';
+import 'package:refactory_scp/provider/chat/chat_controller.dart';
 import 'package:refactory_scp/src/common/colors.dart';
 import 'package:refactory_scp/src/components/content_title.dart';
 import 'package:refactory_scp/src/pages/template/default_template.dart';
@@ -30,7 +30,7 @@ class ChatPage extends DefaultTemplate {
   /// Get Chat comment
   _getData(BuildContext context) async {
     var url =
-        Comm_Params.URL_CHAT.replaceAll(Comm_Params.CHAT_ROOM_ID, chatRoomId);
+    Comm_Params.URL_CHAT.replaceAll(Comm_Params.CHAT_ROOM_ID, chatRoomId);
     await ScpHttpClient.get(
       url,
       onSuccess: (json, message) {
@@ -54,16 +54,16 @@ class ChatPage extends DefaultTemplate {
       onFailed: (message) {
         context.read<ChatController>().clear();
         ScaffoldMessenger.of(context).showSnackBar(
-            //SnackBar 구현하는법 context는 위에 BuildContext에 있는 객체를 그대로 가져오면 됨.
+          //SnackBar 구현하는법 context는 위에 BuildContext에 있는 객체를 그대로 가져오면 됨.
             SnackBar(
-          content: Text(message), //snack bar의 내용. icon, button같은것도 가능하다.
-          duration: const Duration(seconds: 5), //올라와있는 시간
-          action: SnackBarAction(
-            //추가로 작업을 넣기. 버튼넣기라 생각하면 편하다.
-            label: 'close', //버튼이름
-            onPressed: () {}, //버튼 눌렀을때.
-          ),
-        ));
+              content: Text(message), //snack bar의 내용. icon, button같은것도 가능하다.
+              duration: const Duration(seconds: 5), //올라와있는 시간
+              action: SnackBarAction(
+                //추가로 작업을 넣기. 버튼넣기라 생각하면 편하다.
+                label: 'close', //버튼이름
+                onPressed: () {}, //버튼 눌렀을때.
+              ),
+            ));
       },
     );
   }
@@ -72,27 +72,27 @@ class ChatPage extends DefaultTemplate {
     if (stompClient == null) {
       stompClient = StompClient(
           config: StompConfig(
-        url: socketUrl,
-        onConnect: (frame) {
-          stompClient!.subscribe(
-            destination: '/topic/$chatRoomId',
-            callback: (StompFrame frame) {
-              print(frame.body);
-              if (frame.body != null) {
-                Map<String, dynamic> obj = json.decode(frame.body!);
-                var chat = ChatObject.fromJson(obj);
-                context.read<ChatController>().add(chat);
-                mainScrollController.animateTo(
-                    mainScrollController.position.maxScrollExtent + 100,
-                    duration: const Duration(milliseconds: 1),
-                    curve: Curves.linear);
-              }
+            url: socketUrl,
+            onConnect: (frame) {
+              stompClient!.subscribe(
+                destination: '/topic/$chatRoomId',
+                callback: (StompFrame frame) {
+                  print(frame.body);
+                  if (frame.body != null) {
+                    Map<String, dynamic> obj = json.decode(frame.body!);
+                    var chat = ChatObject.fromJson(obj);
+                    context.read<ChatController>().add(chat);
+                    mainScrollController.animateTo(
+                        mainScrollController.position.maxScrollExtent + 100,
+                        duration: const Duration(milliseconds: 1),
+                        curve: Curves.linear);
+                  }
+                },
+              );
             },
-          );
-        },
-        onStompError: (StompFrame) => print(StompFrame),
-        onWebSocketError: (e) => print('webSocket err : $e'),
-      ));
+            onStompError: (StompFrame) => print(StompFrame),
+            onWebSocketError: (e) => print('webSocket err : $e'),
+          ));
       stompClient!.activate();
     } else {
       stompClient!.deactivate();
@@ -123,7 +123,7 @@ class ChatPage extends DefaultTemplate {
                           ),
                           ...List.generate(
                             context.watch<ChatController>().get().length,
-                            (index) => _commentView(
+                                (index) => _commentView(
                                 context.watch<ChatController>().get()[index]),
                           ),
                           const SizedBox(
@@ -166,7 +166,7 @@ class ChatPage extends DefaultTemplate {
                 Text(
                   chat.userNickname,
                   style:
-                      const TextStyle(color: CustomColors.yellow, fontSize: 12),
+                  const TextStyle(color: CustomColors.yellow, fontSize: 12),
                 ),
               ],
             ),
@@ -214,7 +214,7 @@ class ChatPage extends DefaultTemplate {
           decoration: InputDecoration(
             hintText: 'Input Comment',
             hintStyle:
-                TextStyle(color: CustomColors.deepPurple.withOpacity(0.5)),
+            TextStyle(color: CustomColors.deepPurple.withOpacity(0.5)),
             label: null,
             focusedBorder: InputBorder.none,
             enabledBorder: InputBorder.none,
